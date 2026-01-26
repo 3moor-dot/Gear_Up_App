@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gear_up_app/pages/Registration/register.dart';
+import 'package:gear_up_app/pages/Forgot_Password/forgot_password.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -9,6 +10,16 @@ class LoginPage extends StatelessWidget {
     final primaryColor = const Color(0xFF137FEC);
 
     return Scaffold(
+      // AppBar بسيط للعودة للخلف
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, 
+                color: isDark ? Colors.white : Colors.black, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       // backgroundColor يتغير تلقائياً بناءً على الـ ThemeData في الـ MaterialApp
       body: SafeArea(
         child: SingleChildScrollView(
@@ -102,7 +113,12 @@ class LoginPage extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      /* Navigate to Forgot Password */
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordPage(),
+                        ),
+                      );
                     },
                     child: Text(
                       "هل نسيت كلمة السر؟",

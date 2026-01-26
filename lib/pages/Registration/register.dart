@@ -22,6 +22,16 @@ class _RegisterPageState extends State<RegisterPage> {
     final primaryColor = const Color(0xFF137FEC);
 
     return Scaffold(
+      // AppBar بسيط للعودة للخلف
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, 
+                color: isDark ? Colors.white : Colors.black, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
