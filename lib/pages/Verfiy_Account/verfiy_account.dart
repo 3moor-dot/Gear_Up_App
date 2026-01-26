@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gear_up_app/pages/Reset_Password/reset_password.dart';
 
 class VerificationPage extends StatefulWidget {
   const VerificationPage({super.key});
@@ -99,7 +100,10 @@ class _VerificationPageState extends State<VerificationPage> {
               // Verify Button
               ElevatedButton(
                 onPressed: () {
-                  // Navigator.push(context, MaterialPageRoute(builder: (context) => const ResetPasswordPage()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
