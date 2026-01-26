@@ -1,0 +1,1 @@
+ /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/flutter_build/ca2f83f0705bf6b0c13aea87f2f04926/dart_build_result.json: 
