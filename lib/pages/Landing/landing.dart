@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:gear_up_app/components/ThemeToggle/theme_toggle.dart';
-import 'package:gear_up_app/pages/LogIn/log_in.dart'; // تأكد من المسار الصحيح لملفك
+import 'package:gear_up_app/pages/LogIn/log_in.dart';
+import 'package:gear_up_app/pages/Registration/register.dart';
 
 void main() {
   runApp(
@@ -248,7 +249,25 @@ class LandingPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _heroBtn("سجل الآن", Colors.black, Colors.white, 200),
+
+                    // --- التعديل هنا ---
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterPage(),
+                          ),
+                        );
+                      },
+                      child: _heroBtn(
+                        "سجل الآن",
+                        Colors.black,
+                        Colors.white,
+                        200,
+                      ),
+                    ),
+                    // ------------------
                   ],
                 ),
               ),

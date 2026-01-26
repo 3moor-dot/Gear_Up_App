@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:gear_up_app/pages/Registration/register.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -151,8 +151,13 @@ class LoginPage extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      /* Navigate to Register */
-                    },
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterPage(),
+                              ), // تأكد أن اسم الكلاس هو LoginPage
+                            );
+                          },
                     child: const Text(
                       "قم بالتسجيل",
                       style: TextStyle(
