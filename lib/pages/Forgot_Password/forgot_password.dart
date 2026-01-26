@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gear_up_app/pages/LogIn/log_in.dart';
+import 'package:gear_up_app/pages/Verfiy_Account/verfiy_account.dart';
 class ForgotPasswordPage extends StatelessWidget {
   const ForgotPasswordPage({super.key});
 
@@ -98,9 +99,13 @@ class ForgotPasswordPage extends StatelessWidget {
 
               // SEND BUTTON
               ElevatedButton(
-                onPressed: () {
-                  // الانتقال لصفحة التأكيد (Verify Account)
-                  // Navigator.push(context, MaterialPageRoute(builder: (context) => const VerifyPage()));
+                onPressed: () => {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const VerificationPage(),
+                    ),
+                  ),
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
