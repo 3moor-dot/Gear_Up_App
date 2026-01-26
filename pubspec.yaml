@@ -66,6 +66,7 @@ flutter:
     - assets/gearup-logo.png
     - assets/car-dashboard.png
     - assets/avatar-team.png
+    - assets/car.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

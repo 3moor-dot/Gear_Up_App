@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:gear_up_app/components/ThemeToggle/theme_toggle.dart';
+import 'package:gear_up_app/pages/LogIn/log_in.dart'; // تأكد من المسار الصحيح لملفك
 
 void main() {
   runApp(
@@ -78,14 +79,26 @@ class LandingPage extends StatelessWidget {
                       children: [
                         _navBtn("اشترك", const Color(0xFF137FEC), Colors.white),
                         const SizedBox(width: 8),
-                        _navBtn(
-                          "تسجيل دخول",
-                          isDark ? Colors.grey[800]! : Colors.black,
-                          Colors.white,
-                        ),
-                        const SizedBox(width: 10),
 
-                        // --- تم استبدال الكود القديم بالجديد هنا ---
+                        // --- التعديل يبدأ هنا ---
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginPage(),
+                              ), // تأكد أن اسم الكلاس هو LoginPage
+                            );
+                          },
+                          child: _navBtn(
+                            "تسجيل دخول",
+                            isDark ? Colors.grey[800]! : Colors.black,
+                            Colors.white,
+                          ),
+                        ),
+
+                        // --- التعديل ينتهي هنا ---
+                        const SizedBox(width: 10),
                         ThemeToggle(
                           isDark: themeProvider.isDark,
                           onToggle: () => themeProvider.toggleTheme(),

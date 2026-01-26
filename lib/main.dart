@@ -40,5 +40,3 @@ class GearUpApp extends StatelessWidget {
     );
   }
 }
-
-// --- بقية الكود (ThemeProvider و LandingPage) يوضع هنا بالأسفل في نفس الملف ---
