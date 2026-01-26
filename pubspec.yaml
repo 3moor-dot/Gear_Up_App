@@ -38,6 +38,8 @@ dependencies:
   flutter_animate: ^4.5.2
   font_awesome_flutter: ^10.12.0
   flutter_staggered_animations: ^1.1.1
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +69,7 @@ flutter:
     - assets/car-dashboard.png
     - assets/avatar-team.png
     - assets/car.png
+    - assets/car_rav4.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

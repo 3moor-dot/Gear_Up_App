@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gear_up_app/pages/Landing/landing.dart';
+import 'package:gear_up_app/pages/Customer/dashboard.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 void main() {
   runApp(
     ChangeNotifierProvider(
@@ -20,6 +23,14 @@ class GearUpApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      locale: const Locale('ar', 'AE'), // تحديد اللغة العربية
+      supportedLocales: const [Locale('ar', 'AE')],
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        // إضافة المندوبين اللازمين للترجمة
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       title: 'GearUp AI',
 
       // إعدادات الثيم (Light & Dark)
@@ -36,7 +47,7 @@ class GearUpApp extends StatelessWidget {
       ),
 
       // الصفحة التي تظهر عند فتح التطبيق
-      home: const LandingPage(),
+      home: const CustomerDashboardPage(),
     );
   }
 }
