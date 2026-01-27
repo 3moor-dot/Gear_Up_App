@@ -12,11 +12,31 @@ class CustomDrawer extends StatelessWidget {
 
     // قائمة العناصر
     final List<Map<String, dynamic>> menuItems = [
-      {'name': 'لوحة التحكم', 'icon': Icons.dashboard_rounded, 'path': '/dashboard'},
-      {'name': 'تذكير', 'icon': Icons.notifications_active_rounded, 'path': '/reminders'},
-      {'name': 'تاريخ الخدمة', 'icon': Icons.history_rounded, 'path': '/history'},
-      {'name': 'حجز صيانة', 'icon': Icons.build_circle_rounded, 'path': '/bookings'},
-      {'name': 'طلب صيانة', 'icon': Icons.access_time_filled_rounded, 'path': '/request'},
+      {
+        'name': 'لوحة التحكم',
+        'icon': Icons.dashboard_rounded,
+        'path': '/dashboard',
+      },
+      {
+        'name': 'تذكير',
+        'icon': Icons.notifications_active_rounded,
+        'path': '/reminders',
+      },
+      {
+        'name': 'تاريخ الخدمة',
+        'icon': Icons.history_rounded,
+        'path': '/history',
+      },
+      {
+        'name': 'حجز صيانة',
+        'icon': Icons.build_circle_rounded,
+        'path': '/bookings',
+      },
+      {
+        'name': 'طلب صيانة',
+        'icon': Icons.access_time_filled_rounded,
+        'path': '/request',
+      },
       {'name': 'المساعد الذكي', 'icon': Icons.smart_toy_rounded, 'path': '/ai'},
     ];
 
@@ -24,8 +44,8 @@ class CustomDrawer extends StatelessWidget {
       backgroundColor: isDark ? const Color(0xFF0F1323) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          bottomLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
       ),
       child: Column(
@@ -61,14 +81,19 @@ class CustomDrawer extends StatelessWidget {
                   primaryColor: primaryColor,
                   isDark: isDark,
                   onTap: () {
-                    Navigator.pop(context); // غلق الدرور
-                    // Navigator.pushNamed(context, item['path']); // الانتقال
+                    // 1. غلق الدرور أولاً
+                    Navigator.pop(context);
+
+                    // 2. التحقق إذا كنا في نفس الصفحة لتجنب إعادة تحميلها
+                    if (!isActive) {
+                      // 3. الانتقال باستخدام الاسم (Named Route)
+                      Navigator.pushNamed(context, item['path']);
+                    }
                   },
                 );
               },
             ),
           ),
-
           // Profile Section (Bottom)
           _buildProfileSection(context, isDark, primaryColor),
         ],
@@ -92,10 +117,14 @@ class CustomDrawer extends StatelessWidget {
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         selected: isActive,
-        selectedTileColor: isDark ? const Color(0xFF137FEC).withOpacity(0.1) : const Color(0xFFE5F1FD),
+        selectedTileColor: isDark
+            ? const Color(0xFF137FEC).withOpacity(0.1)
+            : const Color(0xFFE5F1FD),
         leading: Icon(
           icon,
-          color: isActive ? primaryColor : (isDark ? Colors.grey[400] : Colors.grey[700]),
+          color: isActive
+              ? primaryColor
+              : (isDark ? Colors.grey[400] : Colors.grey[700]),
           size: 24,
         ),
         title: Text(
@@ -103,7 +132,9 @@ class CustomDrawer extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            color: isActive ? primaryColor : (isDark ? Colors.grey[300] : Colors.grey[800]),
+            color: isActive
+                ? primaryColor
+                : (isDark ? Colors.grey[300] : Colors.grey[800]),
           ),
         ),
       ),
@@ -111,12 +142,18 @@ class CustomDrawer extends StatelessWidget {
   }
 
   // ويدجت البروفايل في الأسفل
-  Widget _buildProfileSection(BuildContext context, bool isDark, Color primaryColor) {
+  Widget _buildProfileSection(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF137FEC).withOpacity(0.05) : Colors.grey[50],
+        color: isDark
+            ? const Color(0xFF137FEC).withOpacity(0.05)
+            : Colors.grey[50],
         borderRadius: BorderRadius.circular(25),
         border: Border.all(color: primaryColor.withOpacity(0.1)),
       ),
@@ -170,7 +207,12 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildActionBtn({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+  Widget _buildActionBtn({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -180,7 +222,14 @@ class CustomDrawer extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: color),
             const SizedBox(width: 10),
-            Text(label, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w500)),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),

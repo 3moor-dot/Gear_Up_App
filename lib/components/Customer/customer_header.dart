@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:gear_up_app/components/ThemeToggle/theme_toggle.dart'; 
+import 'package:gear_up_app/components/ThemeToggle/theme_toggle.dart';
+import 'package:gear_up_app/main.dart';
+import 'package:provider/provider.dart';
 
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({super.key});
@@ -8,6 +10,7 @@ class DashboardHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = const Color(0xFF137FEC);
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
@@ -33,8 +36,8 @@ class DashboardHeader extends StatelessWidget {
                   const SizedBox(width: 8),
                   // الثيم توجل اللي صنعناه سابقاً
                   ThemeToggle(
-                    isDark: isDark,
-                    onToggle: () {},
+                    isDark: themeProvider.isDark,
+                    onToggle: () => themeProvider.toggleTheme(),
                   ),
                 ],
               ),
@@ -42,12 +45,17 @@ class DashboardHeader extends StatelessWidget {
               // اليسار: معلومات المستخدم والصورة
               Row(
                 children: [
+                  _buildProfileAvatar(primaryColor),
+                  const SizedBox(width: 12),
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         "أهلاً، علي جمال",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       Text(
                         "طاب يومك!",
@@ -55,8 +63,6 @@ class DashboardHeader extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(width: 12),
-                  _buildProfileAvatar(primaryColor),
                 ],
               ),
             ],
@@ -68,7 +74,9 @@ class DashboardHeader extends StatelessWidget {
           Container(
             height: 50,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF137FEC).withOpacity(0.1) : const Color(0xFFF3F8FF),
+              color: isDark
+                  ? const Color(0xFF137FEC).withOpacity(0.1)
+                  : const Color(0xFFF3F8FF),
               borderRadius: BorderRadius.circular(25),
             ),
             child: TextField(
@@ -81,7 +89,10 @@ class DashboardHeader extends StatelessWidget {
                 ),
                 suffixIcon: Icon(Icons.search, color: primaryColor),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 15,
+                ),
               ),
             ),
           ),
@@ -99,7 +110,11 @@ class DashboardHeader extends StatelessWidget {
         color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade100,
         shape: BoxShape.circle,
       ),
-      child: Icon(icon, size: 22, color: isDark ? Colors.white : Colors.black87),
+      child: Icon(
+        icon,
+        size: 22,
+        color: isDark ? Colors.white : Colors.black87,
+      ),
     );
   }
 
@@ -111,7 +126,9 @@ class DashboardHeader extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: primaryColor.withOpacity(0.2), width: 2),
         image: const DecorationImage(
-          image: AssetImage('assets/avatar-path.png'), // استبدلها بالمسار الفعلي
+          image: AssetImage(
+            'assets/avatar-path.png',
+          ), // استبدلها بالمسار الفعلي
           fit: BoxFit.cover,
         ),
       ),

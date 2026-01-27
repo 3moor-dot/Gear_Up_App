@@ -10,7 +10,7 @@
 		</data>
 		<key>flutter_assets/AssetManifest.bin</key>
 		<data>
-		PzY5rbyxn1x/DeawZNvrq5u6Fw0=
+		fy2RebfTP5jRrrBqGaFSJFUGcXs=
 		</data>
 		<key>flutter_assets/FontManifest.json</key>
 		<data>
@@ -18,7 +18,7 @@
 		</data>
 		<key>flutter_assets/NOTICES.Z</key>
 		<data>
-		kxPCSz+OJx2XgCgfVZ9KC6himFk=
+		tfz5rP6ECEVfIT6plGNaZiYej0I=
 		</data>
 		<key>flutter_assets/NativeAssetsManifest.json</key>
 		<data>
@@ -31,6 +31,14 @@
 		<key>flutter_assets/assets/car-dashboard.png</key>
 		<data>
 		q53jeEBFZt5B4fPfK5cuFM72t7M=
+		</data>
+		<key>flutter_assets/assets/car.png</key>
+		<data>
+		gYY4OSzZkqPEF2adBgAtdcEe4kY=
+		</data>
+		<key>flutter_assets/assets/car_rav4.png</key>
+		<data>
+		5cuZ30/AlGt5Xu9QBvPuoT+gcss=
 		</data>
 		<key>flutter_assets/assets/gearup-logo.png</key>
 		<data>
@@ -46,7 +54,7 @@
 		</data>
 		<key>flutter_assets/kernel_blob.bin</key>
 		<data>
-		5Lxa+iBN6A8yurAuXw3DT5tQPL8=
+		5PRQiUiL+8RgX3SDFubiSnIZaoM=
 		</data>
 		<key>flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
 		<data>
@@ -83,7 +91,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			xRAj0vw+4R/rFi6HBO3QLSqfuQFj9saqij82psjkeTs=
+			Sd2xG2Wt85EUGrgBBSTfRuhxQapeakRHyCQzIWnhaDA=
 			</data>
 		</dict>
 		<key>flutter_assets/FontManifest.json</key>
@@ -97,7 +105,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			fyijAYS8fO9aYkrwbL2Tzhd8ge8WPrkNYLSYMcHR20s=
+			HCeMPG7ymuAdNiItG3798aKRU2XDIhBWaEcWY/n+Tfw=
 			</data>
 		</dict>
 		<key>flutter_assets/NativeAssetsManifest.json</key>
@@ -119,6 +127,20 @@
 			<key>hash2</key>
 			<data>
 			J8bPicWC4g2vWGDA0aL9TOdEFRopMsXcU9lKe+lYsD8=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/car.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			+pXEbJX97+ZIkM4GqqWeOiqCNEpT32jDbIZ34Y/WFq8=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/car_rav4.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			djdCqYCrWx2MoBPoGVbOZOjRdNjEpzYk8TbfOI38nDk=
 			</data>
 		</dict>
 		<key>flutter_assets/assets/gearup-logo.png</key>
@@ -146,7 +168,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			peTEb03V1SligILEf+U9YsUWl0zMqLiBo/p9B+VXf48=
+			9L6aCrqIJuedSLnrKxiR/GpnDdNIxZjiH/fn8QhwzXc=
 			</data>
 		</dict>
 		<key>flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>

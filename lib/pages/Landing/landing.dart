@@ -66,16 +66,6 @@ class LandingPage extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Image.asset(
-                      'assets/gearup-logo.png',
-                      width: 60,
-                      errorBuilder: (c, e, s) => CircleAvatar(
-                        backgroundColor: isDark
-                            ? Colors.white
-                            : Colors.grey[200],
-                        child: const Icon(Icons.settings),
-                      ),
-                    ),
                     Row(
                       children: [
                         _navBtn("اشترك", const Color(0xFF137FEC), Colors.white),
@@ -105,6 +95,16 @@ class LandingPage extends StatelessWidget {
                           onToggle: () => themeProvider.toggleTheme(),
                         ),
                       ],
+                    ),
+                    Image.asset(
+                      'assets/gearup-logo.png',
+                      width: 60,
+                      errorBuilder: (c, e, s) => CircleAvatar(
+                        backgroundColor: isDark
+                            ? Colors.white
+                            : Colors.grey[200],
+                        child: const Icon(Icons.settings),
+                      ),
                     ),
                   ],
                 ),

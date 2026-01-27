@@ -18,7 +18,7 @@
 		</data>
 		<key>Assets.car</key>
 		<data>
-		PnpfcQKWXfmIKXyK/SVucE+IhNE=
+		D8RYC/75HweYyugkydz8aqVbpy0=
 		</data>
 		<key>Base.lproj/LaunchScreen.storyboardc/01J-lp-oVM-view-Ze5-6b-2t3.nib</key>
 		<data>
@@ -46,7 +46,7 @@
 		</data>
 		<key>Frameworks/App.framework/App</key>
 		<data>
-		UuTq+CR//qqciHmh5Bmn2pnohfM=
+		nBkdq1UYh/a8xFA+SPl8lBbbLCE=
 		</data>
 		<key>Frameworks/App.framework/Info.plist</key>
 		<data>
@@ -54,11 +54,11 @@
 		</data>
 		<key>Frameworks/App.framework/_CodeSignature/CodeResources</key>
 		<data>
-		1kqi3mvv8vmfKjF14pG7ncAQ6kM=
+		dAxRPYCH+d2cqcQ1vARm+hWAh88=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.bin</key>
 		<data>
-		PzY5rbyxn1x/DeawZNvrq5u6Fw0=
+		fy2RebfTP5jRrrBqGaFSJFUGcXs=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/FontManifest.json</key>
 		<data>
@@ -66,7 +66,7 @@
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/NOTICES.Z</key>
 		<data>
-		kxPCSz+OJx2XgCgfVZ9KC6himFk=
+		tfz5rP6ECEVfIT6plGNaZiYej0I=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/NativeAssetsManifest.json</key>
 		<data>
@@ -79,6 +79,14 @@
 		<key>Frameworks/App.framework/flutter_assets/assets/car-dashboard.png</key>
 		<data>
 		q53jeEBFZt5B4fPfK5cuFM72t7M=
+		</data>
+		<key>Frameworks/App.framework/flutter_assets/assets/car.png</key>
+		<data>
+		gYY4OSzZkqPEF2adBgAtdcEe4kY=
+		</data>
+		<key>Frameworks/App.framework/flutter_assets/assets/car_rav4.png</key>
+		<data>
+		5cuZ30/AlGt5Xu9QBvPuoT+gcss=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/assets/gearup-logo.png</key>
 		<data>
@@ -94,7 +102,7 @@
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/kernel_blob.bin</key>
 		<data>
-		5Lxa+iBN6A8yurAuXw3DT5tQPL8=
+		5PRQiUiL+8RgX3SDFubiSnIZaoM=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
 		<data>
@@ -268,7 +276,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			4Dv9JSLYBp4+Gb6yjrRr1nGNI6IS/6waUnqY+wt4yEg=
+			RF+BmsBmIpnaY6U5JdHadh8b4qN9FgJSxcrdWLudMOk=
 			</data>
 		</dict>
 		<key>Base.lproj/LaunchScreen.storyboardc/01J-lp-oVM-view-Ze5-6b-2t3.nib</key>
@@ -317,7 +325,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			yfAXMYGWfTVuhonR4DcU6KrWx2kUrYibFmjtGK4AxEM=
+			vK8LUBtNkbZIwkXfKTYLxQvn90AN9Amo/0lc0BWsSvY=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/Info.plist</key>
@@ -331,14 +339,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			E1tneNqJfQNjaC68xcyR+eUAQVqIPA3ySBniAfZEwpg=
+			uuN9GsHUhkhPqSkLNwjYQLhmqfZgmNKJ1xX6FVOiUdo=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.bin</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			xRAj0vw+4R/rFi6HBO3QLSqfuQFj9saqij82psjkeTs=
+			Sd2xG2Wt85EUGrgBBSTfRuhxQapeakRHyCQzIWnhaDA=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/FontManifest.json</key>
@@ -352,7 +360,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			fyijAYS8fO9aYkrwbL2Tzhd8ge8WPrkNYLSYMcHR20s=
+			HCeMPG7ymuAdNiItG3798aKRU2XDIhBWaEcWY/n+Tfw=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/NativeAssetsManifest.json</key>
@@ -374,6 +382,20 @@
 			<key>hash2</key>
 			<data>
 			J8bPicWC4g2vWGDA0aL9TOdEFRopMsXcU9lKe+lYsD8=
+			</data>
+		</dict>
+		<key>Frameworks/App.framework/flutter_assets/assets/car.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			+pXEbJX97+ZIkM4GqqWeOiqCNEpT32jDbIZ34Y/WFq8=
+			</data>
+		</dict>
+		<key>Frameworks/App.framework/flutter_assets/assets/car_rav4.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			djdCqYCrWx2MoBPoGVbOZOjRdNjEpzYk8TbfOI38nDk=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/assets/gearup-logo.png</key>
@@ -401,7 +423,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			peTEb03V1SligILEf+U9YsUWl0zMqLiBo/p9B+VXf48=
+			9L6aCrqIJuedSLnrKxiR/GpnDdNIxZjiH/fn8QhwzXc=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
