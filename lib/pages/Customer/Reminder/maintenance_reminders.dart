@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gear_up_app/components/Customer/customer_header.dart';
 import 'package:gear_up_app/components/Customer/customer_sidebar.dart';
+import 'package:gear_up_app/pages/Customer/Reminder/create_reminder_modal.dart';
 
 class MaintenanceRemindersPage extends StatefulWidget {
   const MaintenanceRemindersPage({super.key});
@@ -177,7 +178,10 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
           backgroundColor: primaryColor,
           child: IconButton(
             icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              // استدعاء المودال الذي صممناه
+              CreateReminderModal.show(context);
+            },
           ),
         ),
       ],
@@ -363,7 +367,10 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              // استدعاء المودال الذي صممناه
+              CreateReminderModal.show(context);
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: primaryColor,

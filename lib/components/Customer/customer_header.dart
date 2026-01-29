@@ -41,12 +41,9 @@ class DashboardHeader extends StatelessWidget {
                   ),
                 ],
               ),
-
               // اليسار: معلومات المستخدم والصورة
               Row(
                 children: [
-                  _buildProfileAvatar(primaryColor),
-                  const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -57,11 +54,24 @@ class DashboardHeader extends StatelessWidget {
                           fontSize: 16,
                         ),
                       ),
-                      Text(
+                      const Text(
                         "طاب يومك!",
                         style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     ],
+                  ),
+                  const SizedBox(width: 12),
+                  // نستخدم Builder هنا لتمكين فتح الـ Drawer من داخل المكون
+                  Builder(
+                    builder: (context) => GestureDetector(
+                      onTap: () {
+                        // إذا كان تطبيقك يدعم العربية (RTL)، فغالباً ستستخدم openEndDrawer
+                        Scaffold.of(context).openEndDrawer();
+
+                        // ملاحظة: إذا كان الـ Drawer يفتح من اليسار، استخدم Scaffold.of(context).openDrawer();
+                      },
+                      child: _buildProfileAvatar(primaryColor),
+                    ),
                   ),
                 ],
               ),
@@ -119,17 +129,22 @@ class DashboardHeader extends StatelessWidget {
   }
 
   Widget _buildProfileAvatar(Color primaryColor) {
-    return Container(
-      width: 45,
-      height: 45,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: primaryColor.withOpacity(0.2), width: 2),
-        image: const DecorationImage(
-          image: AssetImage(
-            'assets/avatar-path.png',
-          ), // استبدلها بالمسار الفعلي
-          fit: BoxFit.cover,
+    return MouseRegion(
+      cursor: SystemMouseCursors
+          .click, // يغير شكل الماوس ليد عند الوقوف عليها (للويندوز والويب)
+      child: Container(
+        width: 45,
+        height: 45,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: primaryColor.withOpacity(0.4),
+            width: 2,
+          ), // زدنا الشفافية قليلاً
+          image: const DecorationImage(
+            image: AssetImage('assets/avatar-path.png'),
+            fit: BoxFit.cover,
+          ),
         ),
       ),
     );
