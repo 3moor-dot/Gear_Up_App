@@ -25,7 +25,7 @@ class CustomDrawer extends StatelessWidget {
       {
         'name': 'تاريخ الخدمة',
         'icon': Icons.history_rounded,
-        'path': '/history',
+        'path': '/service-history',
       },
       {
         'name': 'حجز صيانة',
