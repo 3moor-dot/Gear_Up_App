@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gear_up_app/components/Customer/customer_header.dart';
 import 'package:gear_up_app/components/Customer/customer_sidebar.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/add_booking_modal.dart';
+import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/cancel_booking_modal.dart';
 
 class MaintenanceBookingsPage extends StatefulWidget {
   const MaintenanceBookingsPage({super.key});
@@ -108,8 +109,7 @@ class _MaintenanceBookingsPageState extends State<MaintenanceBookingsPage> {
           onPressed: () {
             showModalBottomSheet(
               context: context,
-              isScrollControlled:
-                  true,
+              isScrollControlled: true,
               backgroundColor: Colors.transparent,
               builder: (context) => const AddBookingModal(),
             );
@@ -254,7 +254,12 @@ class _MaintenanceBookingsPageState extends State<MaintenanceBookingsPage> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildActionBtn("إلغاء الحجز", Colors.red, () {}),
+                    child: _buildActionBtn("إلغاء الحجز", Colors.red, () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const CancelBookingDialog(),
+                      );
+                    }),
                   ),
                 ],
               ),
