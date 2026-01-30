@@ -3,6 +3,7 @@ import 'package:gear_up_app/components/Customer/customer_header.dart';
 import 'package:gear_up_app/components/Customer/customer_sidebar.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/add_booking_modal.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/cancel_booking_modal.dart';
+import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/reschedule_modal.dart';
 
 class MaintenanceBookingsPage extends StatefulWidget {
   const MaintenanceBookingsPage({super.key});
@@ -246,11 +247,14 @@ class _MaintenanceBookingsPageState extends State<MaintenanceBookingsPage> {
               child: Row(
                 children: [
                   Expanded(
-                    child: _buildActionBtn(
-                      "تغيير الموعد",
-                      Colors.blueGrey,
-                      () {},
-                    ),
+                    child: _buildActionBtn("تغيير الموعد", Colors.blueGrey, () {
+                      showDialog(
+                        context: context,
+                        barrierDismissible:
+                            true, // يسمح بالإغلاق عند الضغط خارج النافذة
+                        builder: (context) => const RescheduleDialog(),
+                      );
+                    }),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
