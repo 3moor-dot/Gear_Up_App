@@ -193,7 +193,9 @@ class CustomDrawer extends StatelessWidget {
             icon: Icons.settings_outlined,
             label: "الإعدادات",
             color: isDark ? Colors.grey[300]! : Colors.grey[800]!,
-            onTap: () {},
+            onTap: () {
+              Navigator.popAndPushNamed(context, '/customer-settings');
+            },
           ),
           const SizedBox(height: 8),
           _buildActionBtn(
