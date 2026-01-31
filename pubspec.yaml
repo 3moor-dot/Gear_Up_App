@@ -72,6 +72,7 @@ flutter:
     - assets/car_rav4.png
     - assets/avatar-path.png
     - assets/mechanic1.png
+    - assets/img2.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

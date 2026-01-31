@@ -7,6 +7,7 @@ import 'package:gear_up_app/pages/Customer/Control panel/control_panel.dart';
 import 'package:gear_up_app/pages/Customer/Reminder/maintenance_reminders.dart';
 import 'package:gear_up_app/pages/Customer/Service History/service_history.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/maintenance_bookings.dart';
+import 'package:gear_up_app/pages/Customer/Maintenance_Request/maintenance_request.dart';
 
 void main() {
   runApp(
@@ -61,6 +62,7 @@ class GearUpApp extends StatelessWidget {
         '/reminders': (context) => const MaintenanceRemindersPage(),
         '/service-history': (context) => const ServiceHistoryPage(),
         '/bookings': (context) => const MaintenanceBookingsPage(),
+        '/request': (context) => const MaintenanceRequestPage(),
         // أضف أي صفحات جديدة هنا لتتمكن من استدعائها بالاسم
       },
     );
