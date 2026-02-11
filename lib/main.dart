@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
-import 'package:gear_up_app/pages/Landing/landing.dart';
+import 'package:gear_up_app/pages/LogIn/log_in.dart';
+import 'package:gear_up_app/pages/Registration/register.dart';
+import 'package:gear_up_app/pages/Forgot_Password/forgot_password.dart';
+import 'package:gear_up_app/pages/Verfiy_Account/verfiy_account.dart';
 import 'package:gear_up_app/pages/Customer/Control panel/control_panel.dart';
 import 'package:gear_up_app/pages/Customer/Reminder/maintenance_reminders.dart';
 import 'package:gear_up_app/pages/Customer/Service History/service_history.dart';
@@ -56,16 +58,23 @@ class GearUpApp extends StatelessWidget {
       ),
 
       // --- نظام المسارات (Routes) الاحترافي ---
-      initialRoute: '/dashboard', // نقطة البداية
+      initialRoute: '/login', // نقطة البداية
       routes: {
-        '/landing': (context) => const LandingPage(),
-        '/dashboard': (context) => const CustomerDashboardPage(),
-        '/reminders': (context) => const MaintenanceRemindersPage(),
-        '/service-history': (context) => const ServiceHistoryPage(),
-        '/bookings': (context) => const MaintenanceBookingsPage(),
-        '/request': (context) => const MaintenanceRequestPage(),
-        '/customer-settings': (context) => const ProfileSettingsPage(),
-        // أضف أي صفحات جديدة هنا لتتمكن من استدعائها بالاسم
+                    /* PUBLIC PAGES */
+        '/login': (context) => const LoginPage(),
+        '/register': (context) => const RegisterPage(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
+        '/verify-account': (context) => const VerificationPage(),
+        
+                    /* CUSTOMER PAGES */
+        '/customer/dashboard': (context) => const CustomerDashboardPage(),
+        '/customer/reminders': (context) => const MaintenanceRemindersPage(),
+        '/customer/servicehistory': (context) => const ServiceHistoryPage(),
+        '/customer/bookings': (context) => const MaintenanceBookingsPage(),
+        '/customer/request': (context) => const MaintenanceRequestPage(),
+        '/customer/profilesettings': (context) => const ProfileSettingsPage(),
+
+                    /* MECHANIC PAGES */
       },
     );
   }

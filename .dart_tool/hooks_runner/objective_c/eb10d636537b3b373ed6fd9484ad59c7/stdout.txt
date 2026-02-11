@@ -1,0 +1,54 @@
+Running `(cd /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/; TMPDIR=/var/folders/xc/1n7rpbs5585g2j6l1bybn0q40000gn/T/ PATH=/Applications/Xcode.app/Contents/SharedFrameworks/SwiftBuild.framework/Versions/A/PlugIns/SWBBuildService.bundle/Contents/PlugIns/SWBUniversalPlatformPlugin.bundle/Contents/Frameworks/SWBUniversalPlatform.framework/Resources:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/libexec:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/local/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin HOME=/Users/amr /usr/local/share/flutter/bin/cache/dart-sdk/bin/dart --packages=/Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/package_config.json /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/objective_c/eb10d636537b3b373ed6fd9484ad59c7/hook.dill --config=/Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/objective_c/eb10d636537b3b373ed6fd9484ad59c7/input.json )`.
+INFO: 2026-02-11 14:18:11.860705: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-02-11 14:18:12.202318: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-02-11 14:18:12.373551: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target x86_64-apple-ios-simulator -mios-version-min=12 -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_api_dl.c -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/include/dart_api_dl.c.o
+
+INFO: 2026-02-11 14:18:12.374942: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target x86_64-apple-ios-simulator -mios-version-min=12 -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.c -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/objective_c.c.o
+
+INFO: 2026-02-11 14:18:12.375683: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target x86_64-apple-ios-simulator -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/input_stream_adapter.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/input_stream_adapter.m.o
+
+INFO: 2026-02-11 14:18:12.376495: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target x86_64-apple-ios-simulator -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/objective_c.m.o
+
+INFO: 2026-02-11 14:18:12.376962: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target x86_64-apple-ios-simulator -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/observer.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/observer.m.o
+
+INFO: 2026-02-11 14:18:12.377803: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target x86_64-apple-ios-simulator -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/protocol.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/protocol.m.o
+
+
+
+INFO: 2026-02-11 14:18:12.378290: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target x86_64-apple-ios-simulator -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c_bindings_generated.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-02-11 14:18:13.181909: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/objective_c.c.o
+
+INFO: 2026-02-11 14:18:13.192714: 
+INFO: 2026-02-11 14:18:13.192818: 
+INFO: 2026-02-11 14:18:13.192866: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/include/dart_api_dl.c.o
+
+INFO: 2026-02-11 14:18:13.221358: 
+INFO: 2026-02-11 14:18:13.221465: 
+INFO: 2026-02-11 14:18:13.221529: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/observer.m.o
+
+INFO: 2026-02-11 14:18:13.224990: 
+INFO: 2026-02-11 14:18:13.225064: 
+INFO: 2026-02-11 14:18:13.225119: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/protocol.m.o
+
+INFO: 2026-02-11 14:18:13.759882: 
+INFO: 2026-02-11 14:18:13.759993: 
+INFO: 2026-02-11 14:18:13.760083: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/ns_number.m.o
+
+INFO: 2026-02-11 14:18:13.818922: 
+INFO: 2026-02-11 14:18:13.818975: 
+INFO: 2026-02-11 14:18:13.819032: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/input_stream_adapter.m.o
+
+INFO: 2026-02-11 14:18:13.878643: 
+INFO: 2026-02-11 14:18:13.878726: 
+INFO: 2026-02-11 14:18:13.878768: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-02-11 14:18:13.881617: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.1.sdk -target x86_64-apple-ios-simulator -mios-version-min=12 /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/include/dart_api_dl.c.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/objective_c.c.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/input_stream_adapter.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/objective_c.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/observer.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/ns_number.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/protocol.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/obj/src/objective_c_bindings_generated.m.o -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/objective_c.dylib
+
+INFO: 2026-02-11 14:18:14.166507: 
+INFO: 2026-02-11 14:18:14.166685: ld: warning: -undefined dynamic_lookup is deprecated on iOS-simulator
+
+INFO: 2026-02-11 14:18:14.166719: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/eb10d63653/objective_c.dylib
+

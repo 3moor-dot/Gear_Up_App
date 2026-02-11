@@ -15,27 +15,27 @@ class CustomDrawer extends StatelessWidget {
       {
         'name': 'لوحة التحكم',
         'icon': Icons.dashboard_rounded,
-        'path': '/dashboard',
+        'path': '/customer/dashboard',
       },
       {
         'name': 'تذكير',
         'icon': Icons.notifications_active_rounded,
-        'path': '/reminders',
+        'path': '/customer/reminders',
       },
       {
         'name': 'تاريخ الخدمة',
         'icon': Icons.history_rounded,
-        'path': '/service-history',
+        'path': '/customer/servicehistory',
       },
       {
         'name': 'حجز صيانة',
         'icon': Icons.build_circle_rounded,
-        'path': '/bookings',
+        'path': '/customer/bookings',
       },
       {
         'name': 'طلب صيانة',
         'icon': Icons.access_time_filled_rounded,
-        'path': '/request',
+        'path': '/customer/request',
       },
       {'name': 'المساعد الذكي', 'icon': Icons.smart_toy_rounded, 'path': '/ai'},
     ];

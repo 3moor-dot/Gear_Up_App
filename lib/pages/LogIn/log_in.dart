@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:gear_up_app/pages/Registration/register.dart';
-import 'package:gear_up_app/pages/Forgot_Password/forgot_password.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -10,16 +8,6 @@ class LoginPage extends StatelessWidget {
     final primaryColor = const Color(0xFF137FEC);
 
     return Scaffold(
-      // AppBar بسيط للعودة للخلف
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, 
-                color: isDark ? Colors.white : Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       // backgroundColor يتغير تلقائياً بناءً على الـ ThemeData في الـ MaterialApp
       body: SafeArea(
         child: SingleChildScrollView(
@@ -97,7 +85,7 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 40),
 
               // EMAIL / PHONE INPUT
-              _buildLabel("البريد الإلكتروني أو رقم الهاتف", primaryColor),
+              _buildLabel("البريد الإلكتروني أو رقم الهاتف", null),
               _buildTextField(
                 hint: "ادخل البريد الإلكتروني أو رقم الهاتف",
                 icon: Icons.phone_android,
@@ -111,14 +99,10 @@ class LoginPage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  _buildLabel("كلمة المرور", null),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordPage(),
-                        ),
-                      );
+                      Navigator.pushNamed(context, '/forgot-password');
                     },
                     child: Text(
                       "هل نسيت كلمة السر؟",
@@ -129,7 +113,6 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _buildLabel("كلمة المرور", null),
                 ],
               ),
               _buildTextField(
@@ -165,15 +148,11 @@ class LoginPage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const Text("  ليس لديك حساب؟"),
                   GestureDetector(
                     onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
-                              ), // تأكد أن اسم الكلاس هو LoginPage
-                            );
-                          },
+                      Navigator.pushNamed(context, '/register');
+                    },
                     child: const Text(
                       "قم بالتسجيل",
                       style: TextStyle(
@@ -182,7 +161,6 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Text("  ليس لديك حساب؟"),
                 ],
               ),
 

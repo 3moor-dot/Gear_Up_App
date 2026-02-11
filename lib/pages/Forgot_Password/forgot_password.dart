@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gear_up_app/pages/LogIn/log_in.dart';
-import 'package:gear_up_app/pages/Verfiy_Account/verfiy_account.dart';
+
 class ForgotPasswordPage extends StatelessWidget {
   const ForgotPasswordPage({super.key});
 
@@ -64,7 +63,7 @@ class ForgotPasswordPage extends StatelessWidget {
 
               // INPUT FIELD
               Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     "عنوان البريد الإلكتروني",
@@ -100,12 +99,7 @@ class ForgotPasswordPage extends StatelessWidget {
               // SEND BUTTON
               ElevatedButton(
                 onPressed: () => {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const VerificationPage(),
-                    ),
-                  ),
+                  Navigator.pushNamed(context, '/verify-account'),
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
@@ -125,23 +119,17 @@ class ForgotPasswordPage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const Text("  تذكرت كلمة المرور؟"),
                   GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
-                      ),
-                    ),
+                    onTap: () => Navigator.pop(context, '/login'),
                     child: Text(
                       "العودة إلى تسجيل الدخول",
                       style: TextStyle(
                         color: primaryColor,
                         fontWeight: FontWeight.bold,
-                        decoration: TextDecoration.underline,
                       ),
                     ),
                   ),
-                  const Text("  تذكرت كلمة المرور؟"),
                 ],
               ),
             ],
