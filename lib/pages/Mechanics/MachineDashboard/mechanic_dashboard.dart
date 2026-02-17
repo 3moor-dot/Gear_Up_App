@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:gear_up_app/components/Machine/MachineSidebar.dart'; 
+// تأكد من صحة مسارات الملفات لديك
+import 'package:gear_up_app/components/Machine/mechanic_sidebar.dart';
+import 'package:gear_up_app/components/Machine/mechanic_header.dart';
 
 class MachineDashboard extends StatelessWidget {
   const MachineDashboard({super.key});
@@ -12,50 +14,46 @@ class MachineDashboard extends StatelessWidget {
     final Color cardColor = isDark ? const Color(0xFF0D1629) : Colors.white;
     final Color primaryColor = const Color(0xFF137FEC);
 
-    // دالة وهمية لتغيير الثيم (يجب ربطها بـ Provider الخاص بك)
-    void toggleTheme() {}
-
     return Scaffold(
       backgroundColor: bgColor,
-      // استدعاء السايد بار كـ Drawer للموبايل
       endDrawer: !isLargeScreen 
-          ? MachineSidebar(currentRoute: '/mechanics/machinedashboard', onThemeToggle: toggleTheme) 
+          ? const MachineDrawer(currentRoute: '/mechanic/dashboard') 
           : null,
       body: SafeArea(
         child: Directionality(
           textDirection: TextDirection.rtl,
           child: Row(
             children: [
-              // استدعاء السايد بار كعنصر ثابت للشاشات الكبيرة
+              // 2. استخدام MachineDrawer كعنصر ثابت للشاشات الكبيرة (Sidebar)
               if (isLargeScreen)
-                MachineSidebar(
-                  currentRoute: '/mechanics/machinedashboard',
-                  onThemeToggle: toggleTheme,
+                const SizedBox(
+                  width: 280,
+                  child: MachineDrawer(currentRoute: '/mechanic/dashboard'),
                 ),
               
               Expanded(
                 child: Column(
                   children: [
-                    // الهيدر المخصص للموبايل والويب
-                    _buildTopHeader(context, isDark, isLargeScreen),
+                    // 3. استدعاء الهيدر الجديد الذي صممناه
+                    const MachineHeader(),
                     
                     Expanded(
                       child: ListView(
                         padding: const EdgeInsets.all(20),
                         children: [
-                          // 1. الإحصائيات (Stats Cards)
+                          // الإحصائيات
                           _buildStatsSection(isDark, cardColor),
                           
                           const SizedBox(height: 24),
                           
-                          // 2. طلبات الحجز الجديدة (جدول احترافي للموبايل)
+                          // طلبات الحجز الجديدة
                           _buildSectionTitle("طلبات الحجز الجديدة", isDark),
                           const SizedBox(height: 12),
                           _buildBookingsList(isDark, cardColor, primaryColor),
                           
                           const SizedBox(height: 24),
                           
-                          // 3. المواعيد والمراجعات (Row في الكبير و Column في الصغير)
+                          // المواعيد والمراجعات
                           if (isLargeScreen)
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,64 +81,8 @@ class MachineDashboard extends StatelessWidget {
     );
   }
 
-  // --- Header Widget ---
-  Widget _buildTopHeader(BuildContext context, bool isDark, bool isLargeScreen) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: isDark ? const Color(0xFF0D1629) : Colors.white,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "لوحة التحكم",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ),
-              Text(
-                "مرحباً بك مجدداً في GearUp",
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              // أيقونة التنبيهات
-              _headerIcon(Icons.notifications_none_rounded, isDark),
-              if (!isLargeScreen) ...[
-                const SizedBox(width: 10),
-                // زر فتح السايد بار في الموبايل
-                Builder(builder: (context) {
-                  return InkWell(
-                    onTap: () => Scaffold.of(context).openEndDrawer(),
-                    child: _headerIcon(Icons.menu_rounded, isDark),
-                  );
-                }),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  // --- الهيلبرز (نفس المنطق السابق مع تحسينات بسيطة) ---
 
-  Widget _headerIcon(IconData icon, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(icon, size: 22, color: isDark ? Colors.white : Colors.black),
-    );
-  }
-
-  // --- Stats Section ---
   Widget _buildStatsSection(bool isDark, Color cardColor) {
     return LayoutBuilder(builder: (context, constraints) {
       double width = constraints.maxWidth;
@@ -152,7 +94,7 @@ class MachineDashboard extends StatelessWidget {
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: 15,
         mainAxisSpacing: 15,
-        childAspectRatio: width > 600 ? 1.5 : 2.5,
+        childAspectRatio: width > 600 ? 1.4 : 2.5,
         children: [
           _statCard("طلبات الحجز", "4", "+2 عن الأمس", Colors.green, isDark, cardColor),
           _statCard("مواعيد اليوم", "7", "+1 عن الأمس", Colors.blue, isDark, cardColor),
@@ -168,10 +110,7 @@ class MachineDashboard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(color: color.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
-        ],
+        border: Border.all(color: isDark ? Colors.white10 : Colors.grey[100]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +125,6 @@ class MachineDashboard extends StatelessWidget {
     );
   }
 
-  // --- Bookings List (Mobile Friendly) ---
   Widget _buildBookingsList(bool isDark, Color cardColor, Color primaryColor) {
     return Column(
       children: List.generate(2, (index) => Container(
@@ -201,7 +139,10 @@ class MachineDashboard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(backgroundColor: primaryColor.withOpacity(0.1), child: Icon(Icons.person, color: primaryColor)),
+                CircleAvatar(
+                  backgroundColor: primaryColor.withOpacity(0.1),
+                  child: Icon(Icons.person, color: primaryColor)
+                ),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Column(
@@ -218,13 +159,9 @@ class MachineDashboard extends StatelessWidget {
             const SizedBox(height: 15),
             Row(
               children: [
-                Expanded(
-                  child: _actionButton("قبول", Colors.green, () {}),
-                ),
+                Expanded(child: _actionButton("قبول", Colors.green, () {})),
                 const SizedBox(width: 10),
-                Expanded(
-                  child: _actionButton("رفض", Colors.redAccent, () {}),
-                ),
+                Expanded(child: _actionButton("رفض", Colors.redAccent, () {})),
               ],
             )
           ],
@@ -250,7 +187,6 @@ class MachineDashboard extends StatelessWidget {
     );
   }
 
-  // --- Appointments Section ---
   Widget _buildAppointmentsSection(bool isDark, Color cardColor, Color primaryColor) {
     return _glassCard(
       title: "المواعيد القادمة",
@@ -288,7 +224,6 @@ class MachineDashboard extends StatelessWidget {
     );
   }
 
-  // --- Reviews Section ---
   Widget _buildReviewsSection(bool isDark, Color cardColor) {
     return _glassCard(
       title: "المراجعات الأخيرة",
@@ -319,7 +254,6 @@ class MachineDashboard extends StatelessWidget {
     );
   }
 
-  // --- Helpers ---
   Widget _buildSectionTitle(String title, bool isDark) {
     return Text(
       title,

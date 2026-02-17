@@ -11,7 +11,7 @@ import 'package:gear_up_app/pages/Customer/Service History/service_history.dart'
 import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/maintenance_bookings.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Request/maintenance_request.dart';
 import 'package:gear_up_app/pages/Customer/Profile_Settings/profile_settings.dart';
-import 'package:gear_up_app/pages/Mechanics/MachineDashboard/MachineDashboard.dart';
+import 'package:gear_up_app/pages/Mechanics/MachineDashboard/mechanic_dashboard.dart';
 
 void main() {
   runApp(
@@ -57,9 +57,7 @@ class GearUpApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0F1323),
         fontFamily: 'Cairo',
       ),
-
-      // --- نظام المسارات (Routes) الاحترافي ---
-      initialRoute: '/customer/dashboard', // نقطة البداية
+      initialRoute: '/mechanic/dashboard', 
       routes: {
                     /* PUBLIC PAGES */
         '/login': (context) => const LoginPage(),
