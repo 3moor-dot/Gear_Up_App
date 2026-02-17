@@ -11,7 +11,7 @@ class CustomerDashboardPage extends StatelessWidget {
     final primaryColor = const Color(0xFF137FEC);
 
     return Scaffold(
-      endDrawer: const CustomDrawer(currentRoute: '/dashboard'),
+      endDrawer: const CustomDrawer(currentRoute: '/customer/dashboard'),
       body: SafeArea(
         child: Column(
           children: [

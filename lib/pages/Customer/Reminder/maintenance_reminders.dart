@@ -20,7 +20,7 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
     final primaryColor = const Color(0xFF137FEC);
 
     return Scaffold(
-      endDrawer: const CustomDrawer(currentRoute: '/reminders'),
+      endDrawer: const CustomDrawer(currentRoute: '/customer/reminders'),
       body: SafeArea(
         child: Column(
           children: [

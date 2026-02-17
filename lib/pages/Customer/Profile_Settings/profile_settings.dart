@@ -25,7 +25,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
     return Scaffold(
       // Drawer من جهة اليمين كما في MaintenanceRequestPage
-      endDrawer: const CustomDrawer(currentRoute: '/profile'),
+      endDrawer: const CustomDrawer(currentRoute: '/customer/profilesettings'),
       body: SafeArea(
         child: Column(
           children: [

@@ -101,7 +101,6 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 
-  // ويدجت لعنصر القائمة
   Widget _buildMenuItem(
     BuildContext context, {
     required String name,
@@ -115,26 +114,33 @@ class CustomDrawer extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        // تأكد من ضبط الخصائص التالية بدقة
         selected: isActive,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+
+        // لون الخلفية عند الاختيار
         selectedTileColor: isDark
-            ? const Color(0xFF137FEC).withOpacity(0.1)
-            : const Color(0xFFE5F1FD),
+            ? primaryColor.withOpacity(0.15)
+            : primaryColor.withOpacity(0.1),
+
         leading: Icon(
           icon,
+          // هنا نجبر الأيقونة على أخذ اللون الأزرق إذا كانت نشطة
           color: isActive
               ? primaryColor
               : (isDark ? Colors.grey[400] : Colors.grey[700]),
           size: 24,
         ),
+
         title: Text(
           name,
           style: TextStyle(
             fontSize: 16,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            // هنا السر: نجبر النص على اللون الأزرق (primaryColor) عند الاختيار
             color: isActive
                 ? primaryColor
                 : (isDark ? Colors.grey[300] : Colors.grey[800]),
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),
@@ -189,49 +195,102 @@ class CustomDrawer extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          // داخل _buildProfileSection
           _buildActionBtn(
+            context,
             icon: Icons.settings_outlined,
             label: "الإعدادات",
-            color: isDark ? Colors.grey[300]! : Colors.grey[800]!,
+            path: '/customer/profilesettings', // المسار الخاص بالإعدادات
+            isDark: isDark,
+            primaryColor: primaryColor,
             onTap: () {
-              Navigator.popAndPushNamed(context, '/customer-settings');
+              Navigator.pop(context);
+              if (currentRoute != '/customer/profilesettings') {
+                Navigator.pushNamed(context, '/customer/profilesettings');
+              }
             },
           ),
           const SizedBox(height: 8),
           _buildActionBtn(
+            context,
             icon: Icons.logout_rounded,
             label: "تسجيل خروج",
-            color: Colors.redAccent,
-            onTap: () {},
+            path: '', // لا يوجد مسار نشط لتسجيل الخروج
+            isDark: isDark,
+            primaryColor: primaryColor,
+            isLogout: true,
+            onTap: () {
+              // منطق تسجيل الخروج
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionBtn({
+  Widget _buildActionBtn(
+    BuildContext context, {
     required IconData icon,
     required String label,
-    required Color color,
+    required String path,
+    required bool isDark,
+    required Color primaryColor,
     required VoidCallback onTap,
+    bool isLogout = false, // لتمييز زر تسجيل الخروج
   }) {
+    // التحقق إذا كان هذا الزر هو الصفحة الحالية
+    final bool isActive = currentRoute == path;
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          // إضافة الباك جراوند إذا كان نشطاً
+          color: isActive
+              ? (isDark
+                    ? primaryColor.withOpacity(0.15)
+                    : primaryColor.withOpacity(0.1))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: color),
+            Icon(
+              icon,
+              size: 20,
+              color: isActive
+                  ? primaryColor
+                  : (isLogout
+                        ? Colors.redAccent
+                        : (isDark ? Colors.grey[400] : Colors.grey[700])),
+            ),
             const SizedBox(width: 10),
             Text(
               label,
               style: TextStyle(
-                color: color,
                 fontSize: 13,
-                fontWeight: FontWeight.w500,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                color: isActive
+                    ? primaryColor
+                    : (isLogout
+                          ? Colors.redAccent
+                          : (isDark ? Colors.grey[300] : Colors.grey[800])),
               ),
             ),
+            if (isActive) ...[
+              const Spacer(),
+              Container(
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
           ],
         ),
       ),

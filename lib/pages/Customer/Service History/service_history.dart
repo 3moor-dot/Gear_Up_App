@@ -17,7 +17,7 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
 
     return Scaffold(
       // السايد بار (القائمة الجانبية)
-      endDrawer: const CustomDrawer(currentRoute: '/service-history'),
+      endDrawer: const CustomDrawer(currentRoute: '/customer/servicehistory'),
       body: SafeArea(
         child: Column(
           children: [

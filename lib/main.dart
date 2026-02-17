@@ -11,6 +11,7 @@ import 'package:gear_up_app/pages/Customer/Service History/service_history.dart'
 import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/maintenance_bookings.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Request/maintenance_request.dart';
 import 'package:gear_up_app/pages/Customer/Profile_Settings/profile_settings.dart';
+import 'package:gear_up_app/pages/Mechanics/MachineDashboard/MachineDashboard.dart';
 
 void main() {
   runApp(
@@ -58,7 +59,7 @@ class GearUpApp extends StatelessWidget {
       ),
 
       // --- نظام المسارات (Routes) الاحترافي ---
-      initialRoute: '/login', // نقطة البداية
+      initialRoute: '/customer/dashboard', // نقطة البداية
       routes: {
                     /* PUBLIC PAGES */
         '/login': (context) => const LoginPage(),
@@ -75,6 +76,7 @@ class GearUpApp extends StatelessWidget {
         '/customer/profilesettings': (context) => const ProfileSettingsPage(),
 
                     /* MECHANIC PAGES */
+        '/mechanic/dashboard': (context) => const MachineDashboard(),
       },
     );
   }

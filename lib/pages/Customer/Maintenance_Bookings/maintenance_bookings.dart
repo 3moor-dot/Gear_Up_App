@@ -50,7 +50,7 @@ class _MaintenanceBookingsPageState extends State<MaintenanceBookingsPage> {
 
     return Scaffold(
       // الدرور يفتح من اليمين بشكل طبيعي لأننا حددنا اللغة عربية في main.dart
-      endDrawer: const CustomDrawer(currentRoute: '/bookings'),
+      endDrawer: const CustomDrawer(currentRoute: '/customer/bookings'),
       body: SafeArea(
         child: Column(
           children: [

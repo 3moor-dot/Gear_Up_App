@@ -23,7 +23,7 @@ class _MaintenanceRequestPageState extends State<MaintenanceRequestPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      endDrawer: const CustomDrawer(currentRoute: '/request'),
+      endDrawer: const CustomDrawer(currentRoute: '/customer/request'),
       body: SafeArea(
         child: Column(
           children: [
