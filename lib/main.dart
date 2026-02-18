@@ -11,7 +11,7 @@ import 'package:gear_up_app/pages/Customer/Service History/service_history.dart'
 import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/maintenance_bookings.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Request/maintenance_request.dart';
 import 'package:gear_up_app/pages/Customer/Profile_Settings/profile_settings.dart';
-import 'package:gear_up_app/pages/Mechanics/MachineDashboard/mechanic_dashboard.dart';
+import 'package:gear_up_app/pages/Mechanic/Mechanic_Dashboard/mechanic_dashboard.dart';
 
 void main() {
   runApp(

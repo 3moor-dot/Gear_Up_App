@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 // تأكد من صحة مسارات الملفات لديك
-import 'package:gear_up_app/components/Machine/mechanic_sidebar.dart';
-import 'package:gear_up_app/components/Machine/mechanic_header.dart';
+import 'package:gear_up_app/components/Mechanic/mechanic_sidebar.dart';
+import 'package:gear_up_app/components/Mechanic/mechanic_header.dart';
 
 class MachineDashboard extends StatelessWidget {
   const MachineDashboard({super.key});
