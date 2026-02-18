@@ -5,13 +5,16 @@ import 'package:gear_up_app/pages/LogIn/log_in.dart';
 import 'package:gear_up_app/pages/Registration/register.dart';
 import 'package:gear_up_app/pages/Forgot_Password/forgot_password.dart';
 import 'package:gear_up_app/pages/Verfiy_Account/verfiy_account.dart';
+
 import 'package:gear_up_app/pages/Customer/Control panel/control_panel.dart';
 import 'package:gear_up_app/pages/Customer/Reminder/maintenance_reminders.dart';
 import 'package:gear_up_app/pages/Customer/Service History/service_history.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/maintenance_bookings.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Request/maintenance_request.dart';
 import 'package:gear_up_app/pages/Customer/Profile_Settings/profile_settings.dart';
+
 import 'package:gear_up_app/pages/Mechanic/Mechanic_Dashboard/mechanic_dashboard.dart';
+import 'package:gear_up_app/pages/Mechanic/Schedule/Schedule.dart';
 
 void main() {
   runApp(
@@ -75,6 +78,7 @@ class GearUpApp extends StatelessWidget {
 
                     /* MECHANIC PAGES */
         '/mechanic/dashboard': (context) => const MachineDashboard(),
+        '/mechanic/schedule': (context) => const SchedulePage(),
       },
     );
   }

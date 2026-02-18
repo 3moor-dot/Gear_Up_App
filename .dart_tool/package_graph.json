@@ -15,6 +15,7 @@
         "font_awesome_flutter",
         "google_fonts",
         "http",
+        "intl",
         "provider",
         "shared_preferences"
       ],
@@ -46,6 +47,15 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "intl",
+      "version": "0.20.2",
+      "dependencies": [
+        "clock",
+        "meta",
+        "path"
       ]
     },
     {
@@ -325,15 +335,6 @@
       "version": "3.0.7",
       "dependencies": [
         "typed_data"
-      ]
-    },
-    {
-      "name": "intl",
-      "version": "0.20.2",
-      "dependencies": [
-        "clock",
-        "meta",
-        "path"
       ]
     },
     {
