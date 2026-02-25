@@ -83,25 +83,6 @@ class MachineHeader extends StatelessWidget {
           ),
 
           const SizedBox(height: 20),
-
-          // شريط البحث الخاص بالميكانيكي
-          Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF3F8FF),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: TextField(
-              textAlign: TextAlign.right,
-              decoration: InputDecoration(
-                hintText: "ابحث عن رقم الحجز، اسم العميل...",
-                hintStyle: TextStyle(color: Colors.grey[500], fontSize: 13),
-                suffixIcon: Icon(Icons.search_rounded, color: primaryColor),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              ),
-            ),
-          ),
         ],
       ),
     );

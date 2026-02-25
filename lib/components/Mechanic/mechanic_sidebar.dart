@@ -142,7 +142,7 @@ class MachineDrawer extends StatelessWidget {
           _buildActionBtn(
             context,
             icon: Icons.settings_outlined,
-            label: "إعدادات الورشة",
+            label: "الإعدادت",
             path: '/mechanics/machineprofile',
             isDark: isDark,
             primaryColor: primaryColor,
