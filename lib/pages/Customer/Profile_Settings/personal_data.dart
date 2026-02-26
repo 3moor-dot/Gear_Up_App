@@ -1,120 +1,320 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class PersonalDataTab extends StatelessWidget {
+class PersonalDataTab extends StatefulWidget {
   const PersonalDataTab({super.key});
 
   @override
+  State<PersonalDataTab> createState() => _PersonalDataTabState();
+}
+
+class _PersonalDataTabState extends State<PersonalDataTab> {
+  // الحالات (States)
+  bool isEditable = false;
+  bool loading = false;
+  
+  // Controllers للمدخلات
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  String? email; // للعرض فقط كما في React
+  String? profilePhotoUrl;
+
+  File? _selectedImage; // للصورة المختارة محلياً
+  final primaryColor = const Color(0xFF137FEC);
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProfile();
+  }
+
+  // جلب البيانات (GET Profile)
+  Future<void> fetchProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('userToken');
+
+    try {
+      final response = await http.get(
+        Uri.parse("http://gearupapp.runasp.net/api/users/profile"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _firstNameController.text = data['firstName'] ?? "";
+          _lastNameController.text = data['lastName'] ?? "";
+          _phoneController.text = data['phone'] ?? "";
+          email = data['email'] ?? "";
+          profilePhotoUrl = data['profilePhotoUrl'];
+        });
+      }
+    } catch (e) {
+      debugPrint("خطأ في جلب البيانات: $e");
+    }
+  }
+
+  // اختيار صورة من المعرض
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      setState(() {
+        _selectedImage = File(image.path);
+      });
+    }
+  }
+
+  // حفظ التغييرات (PUT Profile)
+  Future<void> handleSave() async {
+    setState(() => loading = true);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('userToken');
+
+    try {
+      var request = http.MultipartRequest(
+        'PUT',
+        Uri.parse("http://gearupapp.runasp.net/api/users/profile"),
+      );
+
+      request.headers['Authorization'] = "Bearer $token";
+      
+      // إضافة الحقول النصية
+      request.fields['FirstName'] = _firstNameController.text;
+      request.fields['LastName'] = _lastNameController.text;
+      request.fields['Phone'] = _phoneController.text;
+
+      // إضافة الصورة إذا تم اختيار واحدة جديدة
+      if (_selectedImage != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'ProfilePhoto', 
+          _selectedImage!.path,
+        ));
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        _showSnackBar("تم تحديث البيانات بنجاح", Colors.green);
+        setState(() => isEditable = false);
+        fetchProfile();
+      } else {
+        _showSnackBar("حدث خطأ أثناء الحفظ", Colors.red);
+      }
+    } catch (e) {
+      _showSnackBar("فشل الاتصال بالسيرفر", Colors.red);
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  void _showSnackBar(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF137FEC);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(40),
-          border: Border.all(color: primaryColor.withOpacity(0.1)),
-        ),
-        child: Column(
-          children: [
-            const Text("البيانات الشخصية الأساسية", 
-              textAlign: TextAlign.right,
-              style: TextStyle(color: Color(0xFF137FEC), fontSize: 20, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 30),
-            
-            // قسم رفع الصورة
-            _buildImagePicker(primaryColor),
-            
-            const SizedBox(height: 30),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1B1F2D) : Colors.white,
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(color: primaryColor.withOpacity(0.1)),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)],
+          ),
+          child: Column(
+            children: [
+              // الهيدر: العنوان + زر التعديل
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("البيانات الشخصية الأساسية", 
+                    style: TextStyle(color: primaryColor, fontSize: 18, fontWeight: FontWeight.w900)),
+                  if (!isEditable)
+                    TextButton.icon(
+                      onPressed: () => setState(() => isEditable = true),
+                      icon: const Icon(Icons.edit, size: 18, color: Colors.white),
+                      label: const Text("تعديل", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      style: TextButton.styleFrom(backgroundColor: Colors.amber[700], shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(horizontal: 16)),
+                    ),
+                ],
+              ),
+              const Divider(height: 40),
 
-            // الحقول (بناءً على الـ inputStyle في React)
-            _buildCustomInput("الاسم الكامل", Icons.person),
-            _buildCustomInput("رقم الهاتف", Icons.phone),
-            _buildCustomInput("البريد الإلكتروني", Icons.email),
-            _buildCustomInput("العنوان بالتفصيل", Icons.location_on),
-            _buildCustomInput("البلد", Icons.map),
-            
-            const SizedBox(height: 30),
+              // قسم الصورة
+              _buildImageSection(),
+              const SizedBox(height: 30),
 
-            // أزرار الحفظ
-            Row(
-              children: [
-                Expanded(child: _buildActionButton("حفظ التغيرات", primaryColor, Colors.white, Icons.save)),
-                const SizedBox(width: 12),
-                Expanded(child: _buildActionButton("إلغاء", const Color(0xFF2D3342), Colors.white, null)),
-              ],
-            ),
-          ],
+              // المدخلات
+              Row(
+                children: [
+                  Expanded(child: _buildInputField("الاسم الأول", _firstNameController, isEditable)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildInputField("اسم العائلة", _lastNameController, isEditable)),
+                ],
+              ),
+              const SizedBox(height: 15),
+              _buildInputField("رقم الهاتف", _phoneController, isEditable),
+              const SizedBox(height: 15),
+              
+              // البريد الإلكتروني (للعرض فقط)
+              _buildReadOnlyField("البريد الإلكتروني (للعرض فقط)", email ?? "..."),
+
+              const SizedBox(height: 40),
+
+              // أزرار الحفظ والإلغاء
+              if (isEditable)
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        loading ? "جاري الحفظ..." : "حفظ التغييرات", 
+                        primaryColor, 
+                        handleSave,
+                        icon: Icons.save
+                      )
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionButton(
+                        "إلغاء", 
+                        const Color(0xFF2D3342), 
+                        () {
+                          setState(() {
+                            isEditable = false;
+                            _selectedImage = null;
+                            fetchProfile();
+                          });
+                        }
+                      )
+                    ),
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildImagePicker(Color color) {
+  Widget _buildImageSection() {
     return Column(
       children: [
         Stack(
           children: [
             Container(
-              width: 110,
-              height: 110,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: color.withOpacity(0.1), width: 4),
-                color: Colors.orange.withOpacity(0.1),
-              ),
-              child: const Center(child: Text("صورة", style: TextStyle(color: Colors.grey))),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: CircleAvatar(
-                backgroundColor: color,
-                radius: 18,
-                child: const Icon(Icons.cloud_upload, color: Colors.white, size: 18),
+                border: Border.all(color: primaryColor.withOpacity(0.1), width: 4),
+                image: DecorationImage(
+                  image: _selectedImage != null 
+                    ? FileImage(_selectedImage!) 
+                    : (profilePhotoUrl != null 
+                        ? NetworkImage(profilePhotoUrl!) 
+                        : const NetworkImage("https://ui-avatars.com/api/?name=User")) as ImageProvider,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
+            if (isEditable)
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    backgroundColor: primaryColor,
+                    radius: 20,
+                    child: const Icon(Icons.cloud_upload, color: Colors.white, size: 20),
+                  ),
+                ),
+              ),
           ],
         ),
-        const SizedBox(height: 15),
-        const Text("تحميل صورة الملف الشخصي", style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12)),
+        const SizedBox(height: 10),
+        const Text("الصورة الشخصية", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
       ],
     );
   }
 
-  Widget _buildCustomInput(String hint, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      child: TextField(
-        textAlign: TextAlign.right,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: Icon(icon, color: Colors.white70),
-          filled: true,
-          fillColor: const Color(0xFF137FEC).withOpacity(0.8), // نفس الستايل الداكن في React
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-          hintStyle: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold),
+  Widget _buildInputField(String label, TextEditingController controller, bool enabled) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 4, bottom: 6),
+          child: Text(label, style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 13)),
         ),
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
+        TextField(
+          controller: controller,
+          enabled: enabled,
+          textAlign: TextAlign.right,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: enabled ? Colors.transparent : Colors.grey.withOpacity(0.05),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: enabled ? BorderSide(color: primaryColor.withOpacity(0.3)) : BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 
-  Widget _buildActionButton(String label, Color bg, Color text, IconData? icon) {
+  Widget _buildReadOnlyField(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 4, bottom: 6),
+          child: const Text("البريد الإلكتروني (للعرض فقط)", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w900, fontSize: 13)),
+        ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Text(value, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(String label, Color color, VoidCallback onTap, {IconData? icon}) {
     return ElevatedButton(
-      onPressed: () {},
+      onPressed: onTap,
       style: ElevatedButton.styleFrom(
-        backgroundColor: bg,
-        padding: const EdgeInsets.symmetric(vertical: 15),
+        backgroundColor: color,
+        minimumSize: const Size(0, 55),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        elevation: 0,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (icon != null) Icon(icon, color: text, size: 18),
+          if (icon != null) Icon(icon, color: Colors.white, size: 20),
           if (icon != null) const SizedBox(width: 8),
-          Text(label, style: TextStyle(color: text, fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ],
       ),
     );
