@@ -63,7 +63,7 @@ class GearUpApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0F1323),
         fontFamily: 'Cairo',
       ),
-      initialRoute: '/mechanic/dashboard', 
+      initialRoute: '/login', 
       routes: {
                     /* PUBLIC PAGES */
         '/login': (context) => const LoginPage(),
