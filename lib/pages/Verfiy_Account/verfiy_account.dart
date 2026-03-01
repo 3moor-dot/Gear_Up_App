@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:gear_up_app/pages/Reset_Password/reset_password.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class VerificationPage extends StatefulWidget {
   const VerificationPage({super.key});
@@ -12,24 +12,30 @@ class VerificationPage extends StatefulWidget {
 
 class _VerificationPageState extends State<VerificationPage> {
   int _timerValue = 60;
-  late Timer _timer;
-  
-  // مصفوفة للتحكم في التركيز على الخانات
-  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
-  final List<TextEditingController> _controllers = List.generate(6, (index) => TextEditingController());
+  Timer? _timer;
+  String _error = "";
+
+  // الالتزام بـ 5 خانات كما في كود React
+  final int _otpLength = 5;
+  late List<FocusNode> _focusNodes;
+  late List<TextEditingController> _controllers;
 
   @override
   void initState() {
     super.initState();
+    _focusNodes = List.generate(_otpLength, (index) => FocusNode());
+    _controllers = List.generate(_otpLength, (index) => TextEditingController());
     _startTimer();
   }
 
   void _startTimer() {
+    _timer?.cancel();
+    _timerValue = 60;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timerValue > 0) {
         setState(() => _timerValue--);
       } else {
-        _timer.cancel();
+        _timer?.cancel();
       }
     });
   }
@@ -40,15 +46,32 @@ class _VerificationPageState extends State<VerificationPage> {
     return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
+  // منطق التحقق (نفس منطق handleVerify في React)
+  Future<void> _handleVerify() async {
+    String token = _controllers.map((e) => e.text).join("");
+
+    if (token.length < _otpLength) {
+      setState(() => _error = "يرجى إدخال الرمز كاملاً");
+      return;
+    }
+
+    setState(() => _error = "");
+
+    // حفظ التوكين في الجهاز للمرحلة القادمة (reset-password)
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("reset_token", token);
+
+    if (mounted) {
+      // الانتقال لصفحة تعيين كلمة المرور الجديدة
+      Navigator.pushNamed(context, '/reset-password');
+    }
+  }
+
   @override
   void dispose() {
-    _timer.cancel();
-    for (var node in _focusNodes) {
-      node.dispose();
-    }
-    for (var controller in _controllers) {
-      controller.dispose();
-    }
+    _timer?.cancel();
+    for (var node in _focusNodes) node.dispose();
+    for (var controller in _controllers) controller.dispose();
     super.dispose();
   }
 
@@ -58,6 +81,7 @@ class _VerificationPageState extends State<VerificationPage> {
     final primaryColor = const Color(0xFF137FEC);
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -69,84 +93,96 @@ class _VerificationPageState extends State<VerificationPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              // Header
-              Text(
-                "التحقق من حسابك",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 500),
+              padding: const EdgeInsets.all(30),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF137FEC).withOpacity(0.05) : const Color(0xFFE8F3FF),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: primaryColor.withOpacity(0.2)),
               ),
-              const SizedBox(height: 12),
-              Text(
-                "لضمان سلامتك، يرجى إدخال الرمز المكون من 6 أرقام الذي أرسلناه إلى بريدك الإلكتروني.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600], height: 1.5),
-              ),
-
-              const SizedBox(height: 40),
-
-              // OTP Input Fields
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(6, (index) => _buildOtpBox(index, isDark, primaryColor)),
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Verify Button
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-                child: const Text("التحقق من الحساب", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-              ),
-
-              const SizedBox(height: 30),
-
-              // Resend Timer Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Header
                   Text(
-                    _formatTime(_timerValue),
-                    style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, color: primaryColor, fontSize: 16),
+                    "التحقق من حسابك",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
                   ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "لضمان سلامتك، يرجى إدخال الرمز المكون من 5 أرقام \nالذي أرسلناه إلى عنوان بريدك الإلكتروني للمتابعة.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600], height: 1.6, fontSize: 14),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // OTP Input Fields (LTR)
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_otpLength, (index) => _buildOtpBox(index, isDark, primaryColor)),
+                    ),
+                  ),
+
+                  if (_error.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 15),
+                      child: Text(_error, style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold)),
+                    ),
+
+                  const SizedBox(height: 32),
+
+                  // Verify Button
+                  ElevatedButton(
+                    onPressed: _handleVerify,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      minimumSize: const Size(double.infinity, 52),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text("التحقق من الحساب", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Resend Timer Section
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("لم تستلم الرمز؟ "),
-                      GestureDetector(
-                        onTap: _timerValue == 0 ? () {
-                          setState(() => _timerValue = 60);
-                          _startTimer();
-                        } : null,
-                        child: Text(
-                          "أعد الإرسال",
-                          style: TextStyle(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
-                            decoration: _timerValue == 0 ? TextDecoration.underline : TextDecoration.none,
-                            
+                      Row(
+                        children: [
+                          const Text("لم تستلم الرمز؟ ", style: TextStyle(fontSize: 13)),
+                          GestureDetector(
+                            onTap: _timerValue == 0 ? () => setState(() => _startTimer()) : null,
+                            child: Opacity(
+                              opacity: _timerValue > 0 ? 0.5 : 1.0,
+                              child: Text(
+                                "أعد الإرسال",
+                                style: TextStyle(
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  decoration: _timerValue == 0 ? TextDecoration.underline : TextDecoration.none,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
+                      ),
+                      Text(
+                        _formatTime(_timerValue),
+                        style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, color: isDark ? Colors.grey[300] : Colors.grey[700], fontSize: 15),
                       ),
                     ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -154,36 +190,39 @@ class _VerificationPageState extends State<VerificationPage> {
   }
 
   Widget _buildOtpBox(int index, bool isDark, Color primaryColor) {
-    return SizedBox(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 5),
       width: 50,
       height: 60,
-      child: TextField(
-        controller: _controllers[index],
-        focusNode: _focusNodes[index],
-        onChanged: (value) {
-          if (value.isNotEmpty && index < 5) {
-            _focusNodes[index + 1].requestFocus();
-          } else if (value.isEmpty && index > 0) {
-            _focusNodes[index - 1].requestFocus();
+      child: RawKeyboardListener(
+        focusNode: FocusNode(), // FocusNode داخلي للتعامل مع الـ Backspace
+        onKey: (event) {
+          if (event is RawKeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
+            if (_controllers[index].text.isEmpty && index > 0) {
+              _focusNodes[index - 1].requestFocus();
+            }
           }
         },
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        inputFormatters: [
-          LengthLimitingTextInputFormatter(1),
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        decoration: InputDecoration(
-          fillColor: isDark ? const Color(0xFF137FEC).withOpacity(0.1) : const Color(0xFFEAF4FF),
-          filled: true,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: primaryColor.withOpacity(0.2)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: primaryColor, width: 2),
+        child: TextField(
+          controller: _controllers[index],
+          focusNode: _focusNodes[index],
+          onChanged: (value) {
+            if (value.isNotEmpty && index < _otpLength - 1) {
+              _focusNodes[index + 1].requestFocus();
+            }
+          },
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          inputFormatters: [
+            LengthLimitingTextInputFormatter(1),
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
+          decoration: InputDecoration(
+            fillColor: isDark ? Colors.grey[700] : Colors.white,
+            filled: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: primaryColor, width: 2)),
           ),
         ),
       ),
