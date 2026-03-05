@@ -87,7 +87,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0B1220) : const Color(0xFFF9FAFB),
-      endDrawer: const MachineDrawer(currentRoute: '/mechanic/reviews'),
+      endDrawer: const MachineDrawer(currentRoute: '/mechanic/reviewing'),
       body: SafeArea(
         child: Directionality(
           textDirection: TextDirection.rtl,

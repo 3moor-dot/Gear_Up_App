@@ -1,126 +1,162 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class MachineDrawer extends StatelessWidget {
+class MachineDrawer extends StatefulWidget {
   final String currentRoute;
 
   const MachineDrawer({super.key, required this.currentRoute});
+
+  @override
+  State<MachineDrawer> createState() => _MachineDrawerState();
+}
+
+class _MachineDrawerState extends State<MachineDrawer> {
+  String _userName = "...";
+  String? _photoUrl;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  // ======= جلب بيانات المستخدم (Fetch Profile) =======
+  Future<void> _fetchProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("userToken");
+
+      if (token == null) return;
+
+      final response = await http.get(
+        Uri.parse("http://gearupapp.runasp.net/api/users/profile"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _userName = "${data['firstName'] ?? ""} ${data['lastName'] ?? ""}".trim();
+          _photoUrl = data['profilePhotoUrl'];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching drawer profile: $e");
+    }
+  }
+
+  // ======= تسجيل الخروج (Logout) =======
+  Future<void> _handleLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // مسح التوكن وكل البيانات المخزنة
+    
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = const Color(0xFF137FEC);
 
-    final List<Map<String, dynamic>> menuItems = [
-      {'name': 'لوحة التحكم', 'icon': Icons.dashboard_rounded, 'path': '/mechanic/dashboard'},
-      {'name': 'جدول المواعيد', 'icon': Icons.calendar_today_rounded, 'path': '/mechanic/schedule'},
-      {'name': 'الحجوزات', 'icon': Icons.assignment_rounded, 'path': '/mechanic/booking'},
-      {'name': 'المراجعات', 'icon': Icons.comment_bank_rounded, 'path': '/mechanic/reviewing'},
-    ];
-
     return Drawer(
       backgroundColor: isDark ? const Color(0xFF0F1323) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-          topRight: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+          topLeft: Radius.circular(30), // ليتناسب مع RTL
+          bottomLeft: Radius.circular(30),
         ),
       ),
       child: Column(
         children: [
           // Logo Section
           Padding(
-            padding: const EdgeInsets.only(top: 60, bottom: 30),
+            padding: const EdgeInsets.only(top: 60, bottom: 40),
             child: Text(
               "GearUp",
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : const Color(0xFF1E293B),
-                letterSpacing: 1.2,
+                letterSpacing: 1.5,
               ),
             ),
           ),
 
-          // Navigation Links
+          // Navigation Items (Same as React Sidebar Items)
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: menuItems.length,
-              itemBuilder: (context, index) {
-                final item = menuItems[index];
-                final bool isActive = currentRoute == item['path'];
-
-                return _buildMenuItem(
-                  context,
-                  name: item['name'],
-                  icon: item['icon'],
-                  isActive: isActive,
-                  primaryColor: primaryColor,
-                  isDark: isDark,
-                  onTap: () {
-                    if (MediaQuery.of(context).size.width <= 1024) Navigator.pop(context);
-                    if (!isActive) Navigator.pushNamed(context, item['path']);
-                  },
-                );
-              },
+              children: [
+                _buildMenuItem(context, "لوحة التحكم", Icons.dashboard_rounded, '/mechanic/dashboard', primaryColor, isDark),
+                _buildMenuItem(context, "جدول المواعيد", Icons.calendar_today_rounded, '/mechanic/schedule', primaryColor, isDark),
+                _buildMenuItem(context, "الحجوزات", Icons.assignment_rounded, '/mechanic/booking', primaryColor, isDark),
+                _buildMenuItem(context, "المراجعات", Icons.comment_bank_rounded, '/mechanic/reviewing', primaryColor, isDark),
+              ],
             ),
           ),
 
-          // Mechanic Profile Section (Bottom)
-          _buildProfileSection(context, isDark, primaryColor),
+          // User Profile Card (Bottom Section)
+          _buildUserCard(context, isDark, primaryColor),
         ],
       ),
     );
   }
 
-  Widget _buildMenuItem(BuildContext context, {
-    required String name,
-    required IconData icon,
-    required bool isActive,
-    required Color primaryColor,
-    required bool isDark,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildMenuItem(BuildContext context, String label, IconData icon, String path, Color primary, bool isDark) {
+    final bool isActive = widget.currentRoute == path;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 5),
       child: ListTile(
-        onTap: onTap,
-        selected: isActive,
+        onTap: () {
+          Navigator.pop(context); // Close drawer
+          if (!isActive) Navigator.pushNamed(context, path);
+        },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        selectedTileColor: isDark ? primaryColor.withOpacity(0.15) : primaryColor.withOpacity(0.1),
+        selected: isActive,
+        selectedTileColor: isDark ? primary.withOpacity(0.1) : const Color(0xFFEAF4FF),
         leading: Icon(
           icon,
-          color: isActive ? primaryColor : (isDark ? Colors.grey[400] : Colors.grey[700]),
-          size: 24,
+          color: isActive ? primary : (isDark ? Colors.white54 : Colors.blueGrey),
+          size: 22,
         ),
         title: Text(
-          name,
+          label,
           style: TextStyle(
-            fontSize: 16,
-            color: isActive ? primaryColor : (isDark ? Colors.grey[300] : Colors.grey[800]),
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            fontSize: 15,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+            color: isActive ? primary : (isDark ? Colors.white70 : Colors.blueGrey[800]),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileSection(BuildContext context, bool isDark, Color primaryColor) {
+  Widget _buildUserCard(BuildContext context, bool isDark, Color primary) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? primaryColor.withOpacity(0.05) : Colors.grey[50],
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: primaryColor.withOpacity(0.1)),
+        color: isDark ? primary.withOpacity(0.1) : const Color(0xFFEAF4FF),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: primary.withOpacity(0.1)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                radius: 22,
-                backgroundImage: AssetImage('assets/mechanic-avatar.png'),
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: primary.withOpacity(0.2),
+                backgroundImage: _photoUrl != null ? NetworkImage(_photoUrl!) : null,
+                child: _photoUrl == null ? Icon(Icons.person, color: primary) : null,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -128,86 +164,107 @@ class MachineDrawer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "أحمد الميكانيكي",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87),
+                      _userName,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const Text("مدير الورشة", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text(
+                      "ميكانيكي",
+                      style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.blueGrey),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
+          // Settings Button
           _buildActionBtn(
-            context,
-            icon: Icons.settings_outlined,
-            label: "الإعدادت",
-            path: '/mechanics/machineprofile',
-            isDark: isDark,
-            primaryColor: primaryColor,
+            label: "الإعدادات",
+            icon: Icons.settings_rounded,
+            color: isDark ? Colors.white10 : Colors.white,
+            textColor: isDark ? Colors.white : primary,
             onTap: () {
-              if (MediaQuery.of(context).size.width <= 1024) Navigator.pop(context);
-              if (currentRoute != '/mechanics/machineprofile') {
-                Navigator.pushNamed(context, '/mechanics/machineprofile');
-              }
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/mechanics/machineprofile');
             },
           ),
           const SizedBox(height: 8),
+          // Logout Button
           _buildActionBtn(
-            context,
-            icon: Icons.logout_rounded,
             label: "تسجيل خروج",
-            path: '',
-            isDark: isDark,
-            primaryColor: primaryColor,
-            isLogout: true,
-            onTap: () {},
+            icon: Icons.logout_rounded,
+            color: Colors.transparent,
+            textColor: Colors.redAccent,
+            onTap: () => _handleLogout(context),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionBtn(BuildContext context, {
-    required IconData icon,
+  Widget _buildActionBtn({
     required String label,
-    required String path,
-    required bool isDark,
-    required Color primaryColor,
+    required IconData icon,
+    required Color color,
+    required Color textColor,
     required VoidCallback onTap,
-    bool isLogout = false,
   }) {
-    final bool isActive = currentRoute == path;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-        decoration: BoxDecoration(
-          color: isActive ? (isDark ? primaryColor.withOpacity(0.15) : primaryColor.withOpacity(0.1)) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: isActive ? primaryColor : (isLogout ? Colors.redAccent : (isDark ? Colors.grey[400] : Colors.grey[700]))),
-            const SizedBox(width: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive ? primaryColor : (isLogout ? Colors.redAccent : (isDark ? Colors.grey[300] : Colors.grey[800])),
-              ),
+    // نستخدم ValueNotifier للتحكم في حالة اللمس محلياً لكل زر
+    ValueNotifier<bool> isPressed = ValueNotifier(false);
+
+    return ValueListenableBuilder(
+      valueListenable: isPressed,
+      builder: (context, pressed, child) {
+        return GestureDetector(
+          onTapDown: (_) => isPressed.value = true,
+          onTapUp: (_) => isPressed.value = false,
+          onTapCancel: () => isPressed.value = false,
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeInOut,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              // تغيير اللون والظل عند الضغط (تأثير الـ Hover في الموبايل)
+              color: pressed ? textColor.withOpacity(0.2) : color,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: pressed 
+                ? [] 
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    )
+                  ],
             ),
-            if (isActive) ...[
-              const Spacer(),
-              Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF137FEC), shape: BoxShape.circle)),
-            ],
-          ],
-        ),
-      ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // أيقونة تتحرك قليلاً عند الضغط
+                AnimatedScale(
+                  scale: pressed ? 1.2 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: Icon(icon, size: 18, color: textColor),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
