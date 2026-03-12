@@ -26,7 +26,7 @@ class _ServicesTabState extends State<ServicesTab> {
   String? _statusMessage;
   bool _isSuccess = false;
 
-  final String _baseUrl = "http://gearupapp.runasp.net/api/auth/change-password";
+  final String _baseUrl = "https://gearupapp.runasp.net/api/auth/change-password";
 
   // دالة تغيير كلمة المرور (نفس منطق handleChangePassword)
   Future<void> _changePassword() async {

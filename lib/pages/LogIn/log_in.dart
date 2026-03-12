@@ -35,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse("http://gearupapp.runasp.net/api/auth/login"),
+        Uri.parse("https://gearupapp.runasp.net/api/auth/login"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "emailOrPhone": emailOrPhone,

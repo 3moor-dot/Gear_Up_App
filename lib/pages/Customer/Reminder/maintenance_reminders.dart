@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:gear_up_app/components/Customer/customer_header.dart';
-import 'package:gear_up_app/components/Customer/customer_sidebar.dart';
-import 'package:gear_up_app/pages/Customer/Reminder/create_reminder_modal.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+import '../../../components/Customer/customer_sidebar.dart';
+import '../../../components/Customer/customer_header.dart';
+import './create_reminder_modal.dart';
 
 class MaintenanceRemindersPage extends StatefulWidget {
   const MaintenanceRemindersPage({super.key});
@@ -12,7 +16,108 @@ class MaintenanceRemindersPage extends StatefulWidget {
 }
 
 class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
-  int _activeTab = 0; // 0: الجميع, 1: تأخرت, 2: القادمة
+  // ======= الحالات (States) =======
+  int _activeTab = 0; // 0: الكل, 1: نشط, 2: متوقف
+  List<dynamic> _cars = [];
+  Map<String, dynamic>? _selectedCar;
+  List<dynamic> _reminders = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCars();
+  }
+
+  // ======= جلب البيانات من الـ API =======
+  Future<void> _fetchCars() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("userToken");
+    try {
+      final res = await http.get(
+        Uri.parse("https://gearupapp.runasp.net/api/customers/cars"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        setState(() {
+          _cars = data['cars'] ?? [];
+          if (_cars.isNotEmpty) {
+            _selectedCar = _cars[0];
+            _fetchReminders();
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching cars: $e");
+    }
+  }
+
+  Future<void> _fetchReminders() async {
+    if (_selectedCar == null) return;
+    setState(() => _isLoading = true);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("userToken");
+
+    try {
+      final res = await http.get(
+        Uri.parse(
+          "https://gearupapp.runasp.net/api/Reminder/car/${_selectedCar!['id']}",
+        ),
+        headers: {"Authorization": "Bearer $token"},
+      );
+      if (res.statusCode == 200) {
+        setState(() => _reminders = jsonDecode(res.body));
+      }
+    } catch (e) {
+      debugPrint("Error fetching reminders: $e");
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // ======= العمليات (Actions) =======
+  Future<void> _handleAction(int id, String action) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("userToken");
+    try {
+      final res = await http.post(
+        Uri.parse("https://gearupapp.runasp.net/api/Reminder/$id/$action"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+      if (res.statusCode == 200) _fetchReminders();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("فشل تنفيذ العملية: $e")));
+    }
+  }
+
+  Future<void> _deleteReminder(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("userToken");
+    try {
+      await http.delete(
+        Uri.parse("https://gearupapp.runasp.net/api/Reminder/$id/delete"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+      _fetchReminders();
+    } catch (e) {
+      debugPrint("Delete Error: $e");
+    }
+  }
+
+  // ======= المصفاة (Filtering) =======
+  List<dynamic> get _filteredReminders {
+    if (_activeTab == 0)
+      return _reminders.where((r) => r['status'] != "Completed").toList();
+    if (_activeTab == 1)
+      return _reminders.where((r) => r['status'] == "Active").toList();
+    return _reminders.where((r) => r['status'] == "Paused").toList();
+  }
+
+  List<dynamic> get _completedReminders =>
+      _reminders.where((r) => r['status'] == "Completed").toList();
 
   @override
   Widget build(BuildContext context) {
@@ -26,64 +131,34 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
           children: [
             const DashboardHeader(),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  // Header Section
-                  _buildTopHeader(primaryColor, isDark),
+              child: RefreshIndicator(
+                onRefresh: _fetchReminders,
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    _buildTopHeader(primaryColor, isDark),
+                    const SizedBox(height: 25),
+                    _buildTabsAndAddAction(primaryColor, isDark),
+                    const SizedBox(height: 25),
 
-                  const SizedBox(height: 25),
+                    if (_isLoading)
+                      const Center(child: CircularProgressIndicator())
+                    else ...[
+                      _buildSectionTitle("المهام القادمة", primaryColor),
+                      const SizedBox(height: 15),
+                      ..._filteredReminders.map(
+                        (r) => _buildReminderCard(r, primaryColor, isDark),
+                      ),
+                      if (_filteredReminders.isEmpty)
+                        const Center(child: Text("لا توجد تذكيرات نشطة")),
 
-                  // Tabs & Add Button
-                  _buildTabsAndAddAction(primaryColor, isDark),
-
-                  const SizedBox(height: 25),
-
-                  // High Priority Alert Card (Warning Card)
-                  _buildCriticalAlertCard(isDark),
-
-                  const SizedBox(height: 25),
-
-                  // Upcoming Tasks List
-                  _buildSectionTitle("المهام القادمة", primaryColor),
-                  const SizedBox(height: 15),
-                  _buildTaskItem(
-                    "تغيير الزيت",
-                    "12 نوفمبر",
-                    "🛢️",
-                    Colors.blue,
-                    isDark,
-                  ),
-                  _buildTaskItem(
-                    "دوران الإطارات",
-                    "15 نوفمبر",
-                    "🛞",
-                    Colors.orange,
-                    isDark,
-                  ),
-                  _buildTaskItem(
-                    "التفتيش الحكومي",
-                    "20 نوفمبر",
-                    "🚗",
-                    Colors.red,
-                    isDark,
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Completed History
-                  _buildCompletedHistory(primaryColor, isDark),
-
-                  const SizedBox(height: 25),
-
-                  // Custom Reminders Promo Card
-                  _buildCustomReminderPromo(primaryColor),
-
-                  const SizedBox(height: 25),
-
-                  // Mechanic Contact Card
-                  _buildMechanicContactCard(primaryColor, isDark),
-                ],
+                      const SizedBox(height: 30),
+                      _buildCompletedHistory(isDark),
+                      const SizedBox(height: 25),
+                      _buildCustomReminderPromo(primaryColor),
+                    ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -92,14 +167,12 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
     );
   }
 
-  // --- UI Components ---
-
   Widget _buildTopHeader(Color primaryColor, bool isDark) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
               "تذكيرات الصيانة",
@@ -111,41 +184,233 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
             ),
           ],
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: primaryColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Row(
+        if (_selectedCar != null) _buildCarPicker(primaryColor),
+      ],
+    );
+  }
+
+  Widget _buildCarPicker(Color primaryColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: primaryColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: DropdownButton<Map<String, dynamic>>(
+        value: _selectedCar,
+        dropdownColor: primaryColor,
+        underline: const SizedBox(),
+        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+        items: _cars
+            .map(
+              (c) => DropdownMenuItem<Map<String, dynamic>>(
+                value: c,
+                child: Text(
+                  "${c['brand']} ${c['model']}",
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: (v) {
+          setState(() => _selectedCar = v);
+          _fetchReminders();
+        },
+      ),
+    );
+  }
+
+  Widget _buildReminderCard(
+    Map<String, dynamic> r,
+    Color primaryColor,
+    bool isDark,
+  ) {
+    bool isActive = r['status'] == "Active";
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF137FEC).withOpacity(0.1) : Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(
+          color: isActive
+              ? Colors.blue.withOpacity(0.3)
+              : Colors.orange.withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
             children: [
-              Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
-              SizedBox(width: 4),
-              Text(
-                "2022 Toyota RAV4",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isActive ? Colors.blue : Colors.orange,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.build, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r['name'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      DateFormat(
+                        'yyyy/MM/dd',
+                      ).format(DateTime.parse(r['startDate'])),
+                      style: const TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuButton(
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    child: const Text("حذف"),
+                    onTap: () => _deleteReminder(r['id']),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () =>
+                      _handleAction(r['id'], isActive ? "pause" : "activate"),
+                  style: ElevatedButton.styleFrom(
+                    // تعديل الخلفية لتكون أغمق قليلاً في اللايت مود لزيادة التباين
+                    backgroundColor: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.grey[200],
+                    // تعديل لون النص والأيقونة ليكون واضحاً
+                    foregroundColor: isActive
+                        ? (isDark
+                              ? Colors.orangeAccent
+                              : const Color(
+                                  0xFFE65100,
+                                )) // برتقالي داكن للايت مود
+                        : Colors.green[700],
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    isActive ? "إيقاف مؤقت" : "تنشيط",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => _handleAction(r['id'], "complete"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDark ? Colors.blueAccent : Colors.black,
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    "إتمام",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletedHistory(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white10 : Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "تاريخ مكتمل",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Icon(Icons.history, color: Colors.green),
+            ],
+          ),
+          const Divider(height: 30),
+          ..._completedReminders.map(
+            (r) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  const SizedBox(width: 10),
+                  Text(r['name'], style: const TextStyle(fontSize: 13)),
+                  const Spacer(),
+                  Text(
+                    DateFormat('MM/dd').format(DateTime.parse(r['startDate'])),
+                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- دوال مساعدة للواجهة ---
+  Widget _buildSectionTitle(String title, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 20,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ],
     );
   }
 
   Widget _buildTabsAndAddAction(Color primaryColor, bool isDark) {
-    List<String> tabs = ["الجميع", "تأخرت", "القادمة"];
+    List<String> tabs = ["الجميع", "نشط", "متوقف"];
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Custom Tabs
         Row(
-          children: List.generate(tabs.length, (index) {
-            bool isActive = _activeTab == index;
-            return GestureDetector(
+          children: List.generate(
+            tabs.length,
+            (index) => GestureDetector(
               onTap: () => setState(() => _activeTab = index),
               child: Container(
                 margin: const EdgeInsets.only(left: 8),
@@ -154,7 +419,7 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: isActive
+                  color: _activeTab == index
                       ? primaryColor
                       : (isDark ? Colors.white10 : Colors.grey[200]),
                   borderRadius: BorderRadius.circular(20),
@@ -162,182 +427,21 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
                 child: Text(
                   tabs[index],
                   style: TextStyle(
-                    color: isActive
-                        ? Colors.white
-                        : (isDark ? Colors.white70 : Colors.black54),
+                    color: _activeTab == index ? Colors.white : Colors.grey,
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-            );
-          }),
-        ),
-        // Add Button
-        CircleAvatar(
-          backgroundColor: primaryColor,
-          child: IconButton(
-            icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: () {
-              // استدعاء المودال الذي صممناه
-              CreateReminderModal.show(context);
-            },
+            ),
           ),
+        ),
+        FloatingActionButton.small(
+          backgroundColor: primaryColor,
+          onPressed: () =>
+              CreateReminderModal.show(context, onSuccess: _fetchReminders),
+          child: const Icon(Icons.add, color: Colors.white),
         ),
       ],
-    );
-  }
-
-  Widget _buildCriticalAlertCard(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2C1515) : Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.red.withOpacity(0.5), width: 2),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "⚠️ مطلوب الانتباه",
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-              Icon(
-                Icons.more_horiz,
-                color: isDark ? Colors.white54 : Colors.grey,
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Row(
-            children: [
-              const CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.redAccent,
-                child: Icon(
-                  Icons.warning_amber_rounded,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "تغيير سائل الفرامل",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "يوصى بالإجراء كل سنتين أو 30 ألف ميل",
-                      style: TextStyle(color: Colors.grey[500], fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _actionButton(
-                  "حدد موعداً آخر",
-                  Colors.red.withOpacity(0.1),
-                  Colors.red,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _actionButton("إتمام", Colors.black, Colors.white),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskItem(
-    String title,
-    String date,
-    String emoji,
-    Color color,
-    bool isDark,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF137FEC).withOpacity(0.1)
-            : const Color(0xFFE5F1FD),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: Text(emoji, style: const TextStyle(fontSize: 18)),
-          ),
-          const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(
-                "الموعد: $date",
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-            ],
-          ),
-          const Spacer(),
-          const Icon(Icons.check_circle_outline, color: Colors.blue),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompletedHistory(Color primaryColor, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "تاريخ مكتمل",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-              const Icon(Icons.history, size: 20, color: Colors.green),
-            ],
-          ),
-          const Divider(height: 30),
-          _historyRow("استبدال فلتر الهواء", "20 أكتوبر 2023"),
-          _historyRow("تغيير الزيت", "05 سبتمبر 2023"),
-        ],
-      ),
     );
   }
 
@@ -351,7 +455,7 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
       child: Column(
         children: [
           const Icon(Icons.add_alert_rounded, color: Colors.white, size: 40),
-          const SizedBox(height: 15),
+          const SizedBox(height: 10),
           const Text(
             "تذكيرات مخصصة",
             style: TextStyle(
@@ -367,156 +471,16 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {
-              // استدعاء المودال الذي صممناه
-              CreateReminderModal.show(context);
-            },
+            onPressed: () =>
+                CreateReminderModal.show(context, onSuccess: _fetchReminders),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: primaryColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
             ),
-            child: const Text(
-              "إنشاء تذكير جديد",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            child: const Text("إنشاء تذكير جديد"),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMechanicContactCard(Color primaryColor, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF137FEC).withOpacity(0.1)
-            : const Color(0xFFE5F1FD),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: _iconBtn(Icons.map, "خريطة", Colors.blue)),
-          const SizedBox(width: 10),
-          Expanded(child: _iconBtn(Icons.phone, "اتصال", Colors.green)),
-          const Spacer(),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                "خبراء العناية",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              Text(
-                "★ 4.9",
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 12),
-          const CircleAvatar(
-            radius: 25,
-            backgroundImage: AssetImage('assets/mechanic1.png'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionButton(String label, Color bg, Color txt) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        label,
-        style: TextStyle(color: txt, fontWeight: FontWeight.bold, fontSize: 12),
-      ),
-    );
-  }
-
-  Widget _historyRow(String title, String date) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 20),
-          const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-              Text(
-                date,
-                style: const TextStyle(color: Colors.grey, fontSize: 10),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _iconBtn(IconData icon, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 5),
-          Icon(icon, color: Colors.white, size: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          width: 4,
-          height: 20,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      ],
     );
   }
 }

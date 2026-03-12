@@ -29,7 +29,7 @@ class _PersonalTabState extends State<PersonalTab> {
   String _errorMessage = "";
   String _successMessage = "";
 
-  final String _baseUrl = "http://gearupapp.runasp.net/api";
+  final String _baseUrl = "https://gearupapp.runasp.net/api";
 
   @override
   void initState() {

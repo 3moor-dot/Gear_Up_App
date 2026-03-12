@@ -40,7 +40,7 @@ class _PersonalDataTabState extends State<PersonalDataTab> {
 
     try {
       final response = await http.get(
-        Uri.parse("http://gearupapp.runasp.net/api/users/profile"),
+        Uri.parse("https://gearupapp.runasp.net/api/users/profile"),
         headers: {"Authorization": "Bearer $token"},
       );
 
@@ -80,7 +80,7 @@ class _PersonalDataTabState extends State<PersonalDataTab> {
     try {
       var request = http.MultipartRequest(
         'PUT',
-        Uri.parse("http://gearupapp.runasp.net/api/users/profile"),
+        Uri.parse("https://gearupapp.runasp.net/api/users/profile"),
       );
 
       request.headers['Authorization'] = "Bearer $token";

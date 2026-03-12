@@ -31,7 +31,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
     try {
       final response = await http.get(
-        Uri.parse("http://gearupapp.runasp.net/api/users/profile"),
+        Uri.parse("https://gearupapp.runasp.net/api/users/profile"),
         headers: {"Authorization": "Bearer $token"},
       );
 

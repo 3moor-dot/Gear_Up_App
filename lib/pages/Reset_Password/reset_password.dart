@@ -61,7 +61,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
     try {
       final response = await http.post(
-        Uri.parse("http://gearupapp.runasp.net/api/auth/reset-password"),
+        Uri.parse("https://gearupapp.runasp.net/api/auth/reset-password"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "token": token,

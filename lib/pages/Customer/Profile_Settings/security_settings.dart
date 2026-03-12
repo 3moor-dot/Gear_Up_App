@@ -28,7 +28,7 @@ class _SecuritySettingsTabState extends State<SecuritySettingsTab> {
   String? _statusMessage;
   bool _isSuccess = false;
 
-  final String baseUrl = "http://gearupapp.runasp.net/api/auth/change-password";
+  final String baseUrl = "https://gearupapp.runasp.net/api/auth/change-password";
   final primaryColor = const Color(0xFF137FEC);
 
   // وظيفة تغيير كلمة المرور (Logic)

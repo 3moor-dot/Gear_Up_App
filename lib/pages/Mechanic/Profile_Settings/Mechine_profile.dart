@@ -27,7 +27,7 @@ class _MachineProfilePageState extends State<MachineProfilePage> {
   String _statusMessage = "";
   bool _isError = false;
 
-  final String baseUrl = "http://gearupapp.runasp.net/api";
+  final String baseUrl = "https://gearupapp.runasp.net/api";
 
   @override
   void initState() {

@@ -34,7 +34,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
     try {
       final response = await http.post(
-        Uri.parse("http://gearupapp.runasp.net/api/auth/send-password-reset-email"),
+        Uri.parse("https://gearupapp.runasp.net/api/auth/send-password-reset-email"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email}),
       );

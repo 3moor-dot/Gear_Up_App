@@ -15,7 +15,7 @@ class MyCarsTab extends StatefulWidget {
 
 class _MyCarsTabState extends State<MyCarsTab> {
   // ================= CONFIG =================
-  final String baseUrl = "http://gearupapp.runasp.net/api/customers/cars";
+  final String baseUrl = "https://gearupapp.runasp.net/api/customers/cars";
   final Color primaryColor = const Color(0xFF137FEC);
 
   // ================= STATE =================
