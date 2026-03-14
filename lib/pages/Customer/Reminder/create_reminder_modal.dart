@@ -23,22 +23,19 @@ class CreateReminderModal extends StatefulWidget {
 }
 
 class _CreateReminderModalState extends State<CreateReminderModal> {
-  // ======= الحالات (States) =======
   bool _isLoading = false;
   List<dynamic> _cars = [];
   Map<String, dynamic>? _selectedCar;
 
-  // بيانات النموذج (Form Data)
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
-  final TextEditingController _intervalValueController = TextEditingController(
-    text: "1",
-  );
+  final TextEditingController _intervalValueController = TextEditingController(text: "1");
 
   DateTime _startDate = DateTime.now();
+  DateTime? _endDate;
   TimeOfDay _notifTime = const TimeOfDay(hour: 9, minute: 0);
-  String _frequencyType = "0"; // 0=Once, 1=Daily, 2=Weekly, 3=Monthly, 4=Custom
-  int _intervalUnit = 0; // 0=Days, 1=Weeks, 2=Months, 3=Years
+  String _frequencyType = "0"; 
+  int _intervalUnit = 0; 
 
   @override
   void initState() {
@@ -46,7 +43,7 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
     _fetchCars();
   }
 
-  // ======= جلب السيارات من الـ API =======
+  // ======= جلب السيارات =======
   Future<void> _fetchCars() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("userToken");
@@ -67,12 +64,25 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
     }
   }
 
-  // ======= إرسال البيانات للـ Backend =======
+  // ======= بوب أب الخطأ المخصص =======
+  void _showErrorPopup(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("تنبيه", textAlign: TextAlign.right, style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+        content: Text(message, textAlign: TextAlign.right),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("حسناً")),
+        ],
+      ),
+    );
+  }
+
+  // ======= إرسال البيانات (مطابق لـ React) =======
   Future<void> _handleSave() async {
     if (_nameController.text.isEmpty || _selectedCar == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("يرجى ملء البيانات الأساسية")),
-      );
+      _showErrorPopup("يرجى إدخال اسم التذكير واختيار السيارة.");
       return;
     }
 
@@ -80,20 +90,24 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("userToken");
 
-    // تجهيز الوقت بصيغة HH:mm
-    final String formattedTime =
-        "${_notifTime.hour.toString().padLeft(2, '0')}:${_notifTime.minute.toString().padLeft(2, '0')}";
+    // تنسيق الوقت HH:mm
+    final String formattedTime = "${_notifTime.hour.toString().padLeft(2, '0')}:${_notifTime.minute.toString().padLeft(2, '0')}";
+
+    // منطق الـ ISO Date مع إضافة 12 ساعة كما في React لتجنب مشاكل الـ Timezone
+    String formatToBackend(DateTime date) {
+      final fixedDate = date.add(const Duration(hours: 12));
+      return fixedDate.toIso8601String();
+    }
 
     final payload = {
-      "carId": int.tryParse(_selectedCar!['id'].toString()) ?? 0,
+      "carId": _selectedCar!['id'], // إرساله كما هو (Guid String)
       "name": _nameController.text,
       "description": _descController.text,
-      "startDate": _startDate.toIso8601String(),
+      "startDate": formatToBackend(_startDate),
+      "endDate": _endDate != null ? formatToBackend(_endDate!) : null,
       "preferredNotificationTime": formattedTime,
       "frequencyType": _frequencyType == "4" ? 5 : int.parse(_frequencyType),
-      "intervalValue": _frequencyType == "4"
-          ? int.parse(_intervalValueController.text)
-          : 0,
+      "intervalValue": _frequencyType == "4" ? int.parse(_intervalValueController.text) : 0,
       "intervalUnit": _frequencyType == "4" ? _intervalUnit : 0,
     };
 
@@ -109,37 +123,33 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         widget.onSuccess();
-        Navigator.pop(context);
+        if (mounted) Navigator.pop(context);
       } else {
-        throw Exception(res.body);
+        // فك تشفير رسالة الخطأ من السيرفر
+        final errorBody = jsonDecode(res.body);
+        String errorMsg = errorBody['title'] ?? errorBody['errors']?.toString() ?? "فشل الحفظ";
+        _showErrorPopup(errorMsg);
       }
     } catch (e) {
-      debugPrint("Save Error: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("فشل الحفظ: $e")));
+      _showErrorPopup("حدث خطأ غير متوقع: $e");
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  // ======= أدوات اختيار التاريخ والوقت =======
-  Future<void> _pickDate() async {
+  // ======= التقويمات =======
+  Future<void> _pickDate(bool isStart) async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _startDate,
-      firstDate: DateTime.now(),
+      initialDate: isStart ? _startDate : (_endDate ?? DateTime.now()),
+      firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
-    if (date != null) setState(() => _startDate = date);
-  }
-
-  Future<void> _pickTime() async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: _notifTime,
-    );
-    if (time != null) setState(() => _notifTime = time);
+    if (date != null) {
+      setState(() {
+        if (isStart) _startDate = date; else _endDate = date;
+      });
+    }
   }
 
   @override
@@ -148,9 +158,7 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
     final primaryColor = const Color(0xFF137FEC);
 
     return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0B1020) : const Color(0xFFF8FAFC),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
@@ -161,30 +169,21 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            _buildHeader(context, isDark),
-            const SizedBox(height: 25),
-
-            _buildLabel("اختر مركبة", isDark),
+            _buildHeader(isDark),
+            const SizedBox(height: 20),
+            _buildLabel("اختر مركبة"),
             _buildCarDropdown(isDark),
-
             const SizedBox(height: 15),
-            _buildLabel("عنوان التذكير", isDark),
-            _buildTextField(_nameController, "تغيير زيت، فحص فرامل...", isDark),
-
+            _buildLabel("عنوان التذكير *"),
+            _buildTextField(_nameController, "مثلاً: تغيير الزيت", isDark),
             const SizedBox(height: 15),
-            _buildLabel("ملاحظات", isDark),
-            _buildTextField(
-              _descController,
-              "أضف تفاصيل إضافية...",
-              isDark,
-              maxLines: 2,
-            ),
-
-            const SizedBox(height: 25),
-            _buildBlueCard(primaryColor, isDark),
-
+            _buildLabel("ملاحظات"),
+            _buildTextField(_descController, "اختياري...", isDark, maxLines: 2),
+            const SizedBox(height: 20),
+            _buildFormGrid(isDark),
+            const SizedBox(height: 20),
+            _buildFrequencySection(isDark, primaryColor),
             if (_frequencyType == "4") _buildCustomFrequency(isDark),
-
             const SizedBox(height: 30),
             _buildSaveButton(primaryColor),
           ],
@@ -193,114 +192,65 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
     );
   }
 
-  // ======= مكونات الواجهة (UI Components) =======
-
-  Widget _buildHeader(BuildContext context, bool isDark) {
+  Widget _buildHeader(bool isDark) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.close),
-        ),
-        const Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              "إضافة تذكير صيانة",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              "سيتم تنبيهك في الموعد المحدد",
-              style: TextStyle(color: Colors.grey, fontSize: 11),
-            ),
-          ],
-        ),
+        IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+        const Text("إنشاء تذكير جديد", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       ],
     );
   }
 
-  Widget _buildCarDropdown(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A233A) : Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<Map<String, dynamic>>(
-          value: _selectedCar,
-          isExpanded: true,
-          items: _cars
-              .map(
-                (c) => DropdownMenuItem(
-                  value: c as Map<String, dynamic>,
-                  child: Text(
-                    "${c['brand']} ${c['model']} (${c['year']})",
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: (v) => setState(() => _selectedCar = v),
+  Widget _buildFormGrid(bool isDark) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildDateTimePicker("تاريخ الانتهاء", _endDate == null ? "غير محدد" : DateFormat('yyyy/MM/dd').format(_endDate!), () => _pickDate(false), isDark)),
+            const SizedBox(width: 10),
+            Expanded(child: _buildDateTimePicker("تاريخ البدء *", DateFormat('yyyy/MM/dd').format(_startDate), () => _pickDate(true), isDark)),
+          ],
         ),
-      ),
+        const SizedBox(height: 10),
+        _buildDateTimePicker("وقت الإشعار", _notifTime.format(context), () async {
+          final time = await showTimePicker(context: context, initialTime: _notifTime);
+          if (time != null) setState(() => _notifTime = time);
+        }, isDark),
+      ],
     );
   }
 
-  Widget _buildBlueCard(Color primaryColor, bool isDark) {
+  Widget _buildFrequencySection(bool isDark, Color primaryColor) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: primaryColor.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          _buildRadioTile("مرة واحدة فقط", "0"),
-          _buildRadioTile("يومياً", "1"),
-          _buildRadioTile("أسبوعياً", "2"),
-          _buildRadioTile("شهرياً", "3"),
-          _buildRadioTile("تكرار مخصص", "4"),
-          const Divider(height: 30),
-          Row(
-            children: [
-              Expanded(
-                child: _datePickerTile(
-                  Icons.access_time,
-                  _notifTime.format(context),
-                  _pickTime,
-                  isDark,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _datePickerTile(
-                  Icons.calendar_month,
-                  DateFormat('yyyy/MM/dd').format(_startDate),
-                  _pickDate,
-                  isDark,
-                ),
-              ),
-            ],
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF1A233A) : Colors.white, borderRadius: BorderRadius.circular(15)),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _frequencyType,
+          isExpanded: true,
+          items: const [
+            DropdownMenuItem(value: "0", child: Text("مرة واحدة فقط", textAlign: TextAlign.right)),
+            DropdownMenuItem(value: "1", child: Text("كل يوم")),
+            DropdownMenuItem(value: "2", child: Text("كل أسبوع")),
+            DropdownMenuItem(value: "3", child: Text("كل شهر")),
+            DropdownMenuItem(value: "4", child: Text("تكرار مخصص")),
+          ],
+          onChanged: (v) => setState(() => _frequencyType = v!),
+        ),
       ),
     );
   }
 
   Widget _buildCustomFrequency(bool isDark) {
     return Container(
-      margin: const EdgeInsets.only(top: 15),
+      margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(15),
-      ),
+      decoration: BoxDecoration(color: Colors.blue.withOpacity(0.05), borderRadius: BorderRadius.circular(15)),
       child: Row(
         children: [
+          Expanded(child: _buildTextField(_intervalValueController, "العدد", isDark, isNumber: true)),
+          const SizedBox(width: 10),
           Expanded(
             child: DropdownButton<int>(
               value: _intervalUnit,
@@ -309,17 +259,9 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
                 DropdownMenuItem(value: 0, child: Text("أيام")),
                 DropdownMenuItem(value: 1, child: Text("أسابيع")),
                 DropdownMenuItem(value: 2, child: Text("شهور")),
+                DropdownMenuItem(value: 3, child: Text("سنوات")),
               ],
               onChanged: (v) => setState(() => _intervalUnit = v!),
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: _buildTextField(
-              _intervalValueController,
-              "العدد",
-              isDark,
-              isNumber: true,
             ),
           ),
           const Text(" يتكرر كل: "),
@@ -328,22 +270,43 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
     );
   }
 
-  // ======= دوال صغيرة مساعدة =======
-  Widget _buildLabel(String text, bool isDark) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      text,
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-    ),
-  );
+  Widget _buildDateTimePicker(String label, String value, VoidCallback onTap, bool isDark) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          const SizedBox(height: 5),
+          Container(
+            padding: const EdgeInsets.all(12),
+            width: double.infinity,
+            decoration: BoxDecoration(color: isDark ? const Color(0xFF1A233A) : Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.withOpacity(0.1))),
+            child: Text(value, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String hint,
-    bool isDark, {
-    int maxLines = 1,
-    bool isNumber = false,
-  }) {
+  Widget _buildCarDropdown(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF1A233A) : Colors.white, borderRadius: BorderRadius.circular(15)),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<Map<String, dynamic>>(
+          value: _selectedCar,
+          isExpanded: true,
+          items: _cars.map((c) => DropdownMenuItem(value: c as Map<String, dynamic>, child: Text("${c['brand']} ${c['model']} (${c['year']})"))).toList(),
+          onChanged: (v) => setState(() => _selectedCar = v),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) => Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13));
+
+  Widget _buildTextField(TextEditingController controller, String hint, bool isDark, {int maxLines = 1, bool isNumber = false}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -353,63 +316,7 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
         hintText: hint,
         filled: true,
         fillColor: isDark ? const Color(0xFF1A233A) : Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRadioTile(String title, String value) {
-    return InkWell(
-      onTap: () => setState(() => _frequencyType = value),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text(title, style: const TextStyle(fontSize: 12)),
-          Radio<String>(
-            value: value,
-            groupValue: _frequencyType,
-            onChanged: (v) => setState(() => _frequencyType = v!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _datePickerTile(
-    IconData icon,
-    String text,
-    VoidCallback onTap,
-    bool isDark,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          // تعديل: لون الخلفية يتغير حسب النمط
-          color: isDark ? const Color(0xFF1A233A) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withOpacity(0.1)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: Colors.blue),
-            const SizedBox(width: 8),
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                // تعديل: لون النص يتغير حسب النمط ليصبح واضحاً
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-          ],
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       ),
     );
   }
@@ -420,21 +327,8 @@ class _CreateReminderModalState extends State<CreateReminderModal> {
       height: 55,
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleSave,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-        ),
-        child: _isLoading
-            ? const CircularProgressIndicator(color: Colors.white)
-            : const Text(
-                "حفظ التذكير",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+        style: ElevatedButton.styleFrom(backgroundColor: primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text("إضافة التذكير", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
