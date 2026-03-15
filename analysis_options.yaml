@@ -13,6 +13,7 @@ analyzer:
     deprecated_member_use: ignore
     file_names: ignore
     unused_field: ignore
+    use_full_hex_values_for_flutter_colors: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

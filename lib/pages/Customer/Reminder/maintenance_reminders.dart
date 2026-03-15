@@ -76,43 +76,62 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
   }
 
   // ======= العمليات (تطابق منطق React) =======
-  Future<void> _handleAction(int id, String action) async {
+  Future<bool> _handleAction(String id, String action) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("userToken");
+
     try {
       final res = await http.post(
         Uri.parse("https://gearupapp.runasp.net/api/Reminder/$id/$action"),
-        headers: {"Authorization": "Bearer $token"},
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({}),
       );
-      if (res.statusCode == 200) _fetchReminders();
+
+      debugPrint("ACTION STATUS: ${res.statusCode}");
+      debugPrint("ACTION BODY: ${res.body}");
+
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        // العملية نجحت → حدث الحالة أولًا
+        return true;
+      } else {
+        _showSnackBar("فشل العملية: ${res.statusCode}");
+        return false;
+      }
     } catch (e) {
-      _showSnackBar("فشل تنفيذ العملية");
+      debugPrint("ACTION ERROR: $e");
+      _showSnackBar("خطأ في الاتصال بالسيرفر");
+      return false;
     }
   }
 
-  Future<void> _deleteReminder(int id) async {
+  Future<void> _deleteReminder(String id) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("userToken");
 
-    // أضفنا setState بسيط لإظهار أن العملية بدأت (اختياري)
     try {
       final res = await http.delete(
         Uri.parse("https://gearupapp.runasp.net/api/Reminder/$id/delete"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json", // تأكد من إضافة الهيدرز اللازمة
-        },
+        headers: {"Authorization": "Bearer $token"},
       );
 
+      debugPrint("DELETE STATUS: ${res.statusCode}");
+      debugPrint("DELETE BODY: ${res.body}");
+
       if (res.statusCode == 200 || res.statusCode == 204) {
-        await _fetchReminders(); // ننتظر جلب البيانات الجديدة
+        setState(() {
+          _reminders.removeWhere((r) => r['id'].toString() == id);
+        });
+
         _showSnackBar("تم حذف التذكير بنجاح");
       } else {
-        _showSnackBar("فشل الحذف: ${res.statusCode}");
+        _showSnackBar("فشل الحذف");
       }
     } catch (e) {
-      debugPrint("Delete Error: $e");
-      _showSnackBar("حدث خطأ أثناء الاتصال بالسيرفر");
+      debugPrint("DELETE ERROR: $e");
+      _showSnackBar("خطأ في الاتصال بالسيرفر");
     }
   }
 
@@ -128,7 +147,7 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
     );
   }
 
-  void _showConfirmDelete(int id) {
+  void _showConfirmDelete(String id) {
     // نستخدم Future.delayed بسيط للتأكد من أن القائمة المنبثقة (PopupMenu) أغلقت تماماً قبل فتح المودال
     Future.delayed(Duration.zero, () {
       if (!mounted) return;
@@ -210,10 +229,14 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
                             elevation: 0,
                           ),
                           onPressed: () {
-                            Navigator.of(
-                              dialogContext,
-                            ).pop(); // نغلق المودال أولاً باستخدام الـ context الخاص به
-                            _deleteReminder(id); // ثم ننفذ عملية الحذف
+                            Navigator.of(dialogContext).pop();
+
+                            Future.delayed(
+                              const Duration(milliseconds: 200),
+                              () {
+                                _deleteReminder(id);
+                              },
+                            );
                           },
                           child: const Text(
                             "نعم، احذفه",
@@ -357,139 +380,293 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
     );
   }
 
-  // ======= بطاقة التذكير المحدثة =======
   Widget _buildReminderCard(
     Map<String, dynamic> r,
     Color primaryColor,
     bool isDark,
   ) {
     bool isActive = r['status'] == "Active";
+
     final dateTime = DateTime.parse(r['startDate']);
     final dateStr = DateFormat('yyyy/MM/dd').format(dateTime);
-    final timeStr = DateFormat.jm('ar_EG').format(dateTime);
+
+    String timeStr = "غير محدد";
+
+    if (r['preferredNotificationTime'] != null &&
+        r['preferredNotificationTime'].toString().isNotEmpty) {
+      try {
+        final parts = r['preferredNotificationTime'].split(":");
+        final now = DateTime.now();
+
+        final date = DateTime.utc(
+          now.year,
+          now.month,
+          now.day,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+        ).toLocal();
+
+        timeStr = DateFormat.jm('ar_EG').format(date);
+      } catch (_) {}
+    }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A233A) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: isActive
-              ? Colors.blue.withOpacity(0.1)
-              : Colors.orange.withOpacity(0.1),
+          color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          /// ===== الجزء العلوي =====
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. أيقونة الصيانة أصبحت الآن في أقصى اليسار
+              /// أيقونة الصيانة
               Container(
-                padding: const EdgeInsets.all(12),
+                width: 55,
+                height: 55,
                 decoration: BoxDecoration(
-                  color: (isActive ? Colors.blue : Colors.orange).withOpacity(
-                    0.1,
-                  ),
-                  shape: BoxShape.circle,
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(15),
                 ),
-                child: Icon(
-                  Icons.build_circle_outlined,
-                  color: isActive ? Colors.blue : Colors.orange,
-                  size: 26,
-                ),
+                child: const Icon(Icons.build, color: Colors.blue, size: 28),
               ),
 
-              const SizedBox(width: 15),
+              const SizedBox(width: 14),
 
-              // 2. النصوص في المنتصف ومحاذاتها لليمين لتناسب مكانها الجديد
+              /// النصوص
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, // محاذاة لليمين
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    /// Badge الحالة
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? Colors.green.withOpacity(0.15)
+                            : Colors.orange.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        isActive ? "نشط" : "متوقف",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isActive ? Colors.green : Colors.orange,
+                        ),
+                      ),
+                    ),
+
+                    /// اسم التذكير
                     Text(
                       r['name'],
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "$dateStr  $timeStr",
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
+
+                    if (r['description'] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          '${r['description']}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
-
-              // داخل _buildReminderCard ابحث عن PopupMenuButton
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, color: Colors.grey, size: 20),
-                onSelected: (val) {
-                  if (val == 'delete') {
-                    _showConfirmDelete(r['id']); // تم التغيير هنا
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Text("حذف", style: TextStyle(color: Colors.red)),
-                  ),
-                ],
-              ),
             ],
           ),
+
           const SizedBox(height: 20),
-          // الأزرار تبقى كما هي
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () =>
-                      _handleAction(r['id'], isActive ? "pause" : "activate"),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: isActive ? Colors.orange : Colors.green,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: Text(
-                    isActive ? "إيقاف مؤقت" : "تنشيط",
-                    style: TextStyle(
-                      color: isActive ? Colors.orange : Colors.green,
-                    ),
-                  ),
+
+          /// ===== معلومات التذكير =====
+          Container(
+            padding: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              border: Border(
+                right: BorderSide(
+                  color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                  width: 2,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _handleAction(r['id'], "complete"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.access_time, size: 16, color: Colors.blue),
+                    const SizedBox(width: 6),
+                    Text(
+                      timeStr,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "إتمام",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  ],
                 ),
+
+                const SizedBox(height: 6),
+
+                Row(
+                  children: [
+                    const Icon(Icons.sync, size: 16, color: Colors.blue),
+                    const SizedBox(width: 6),
+                    const Text(
+                      "متكرر",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 6),
+
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_month,
+                      size: 16,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      dateStr,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          /// ===== الأزرار =====
+          Row(
+            children: [
+              /// إتمام
+              if (r['status'] != "Completed")
+                _actionButton(
+                  icon: Icons.check,
+                  label: "إتمام",
+                  color: Colors.green,
+                  onTap: () async {
+                    bool success = await _handleAction(
+                      r['id'].toString(),
+                      "complete",
+                    );
+                    if (success) {
+                      setState(() => r['status'] = "Completed");
+                    }
+                  },
+                ),
+
+              const SizedBox(width: 8),
+
+              /// إيقاف / تشغيل / تكملة
+              if (r['status'] == "Active")
+                _actionButton(
+                  icon: Icons.pause,
+                  label: "إيقاف",
+                  color: Colors.orange,
+                  onTap: () async {
+                    bool success = await _handleAction(r['id'], "pause");
+                    if (success) {
+                      setState(() => r['status'] = "Paused");
+                      _showSnackBar("تم إيقاف التذكير بنجاح");
+                    }
+                  },
+                )
+              else if (r['status'] == "Paused")
+                _actionButton(
+                  icon: Icons.play_arrow,
+                  label: "تكملة",
+                  color: Colors.orange,
+                  onTap: () async {
+                    bool success = await _handleAction(r['id'], "activate");
+                    if (success) setState(() => r['status'] = "Active");
+                  },
+                ),
+
+              const SizedBox(width: 8),
+
+              /// حذف
+              _actionButton(
+                icon: Icons.delete,
+                label: "حذف",
+                color: Colors.red,
+                onTap: () => _showConfirmDelete(r['id'].toString()),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// زر الأكشن
+  Widget _actionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -515,7 +692,6 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
                 children: _completedReminders.map((r) {
                   final dateTime = DateTime.parse(r['startDate']);
                   final dateStr = DateFormat('MM/dd').format(dateTime);
-                  final timeStr = DateFormat.jm('ar_EG').format(dateTime);
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -544,13 +720,6 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
                               style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 10,
-                              ),
-                            ),
-                            Text(
-                              timeStr,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 9,
                               ),
                             ),
                           ],
@@ -604,7 +773,7 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
     );
   }
 
- Widget _buildTabsAndAddAction(Color primaryColor, bool isDark) {
+  Widget _buildTabsAndAddAction(Color primaryColor, bool isDark) {
     List<String> tabs = ["الجميع", "نشط", "متوقف"];
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -638,10 +807,11 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
             ),
           ),
         ),
-        
+
         // زر الإضافة الجديد مع النص في اليمين
         ElevatedButton.icon(
-          onPressed: () => CreateReminderModal.show(context, onSuccess: _fetchReminders),
+          onPressed: () =>
+              CreateReminderModal.show(context, onSuccess: _fetchReminders),
           icon: const Icon(Icons.add, color: Colors.white, size: 18),
           label: const Text(
             "إضافة تذكير",
