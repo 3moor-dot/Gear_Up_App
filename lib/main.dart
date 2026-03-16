@@ -5,6 +5,7 @@ import 'package:gear_up_app/pages/LogIn/log_in.dart';
 import 'package:gear_up_app/pages/Registration/register.dart';
 import 'package:gear_up_app/pages/Forgot_Password/forgot_password.dart';
 import 'package:gear_up_app/pages/Verfiy_Account/verfiy_account.dart';
+import 'package:gear_up_app/pages/NotificationBell/notification_bell.dart';
 
 import 'package:gear_up_app/pages/Customer/Control panel/control_panel.dart';
 import 'package:gear_up_app/pages/Customer/Reminder/maintenance_reminders.dart';
@@ -78,6 +79,7 @@ class GearUpApp extends StatelessWidget {
         '/customer/bookings': (context) => const MaintenanceBookingsPage(),
         '/customer/request': (context) => const MaintenanceRequestPage(),
         '/customer/profilesettings': (context) => const ProfileSettingsPage(),
+        '/customer/notifications': (context) => const NotificationsPage(),
 
                     /* MECHANIC PAGES */
         '/mechanic/dashboard': (context) => const MachineDashboard(),

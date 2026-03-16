@@ -37,11 +37,14 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
+        if (!mounted) return;
+
         setState(() {
           userData = data;
           isLoading = false;
         });
-        // حفظ البيانات محلياً للمزامنة
+
         await prefs.setString('userData', jsonEncode(data));
       } else {
         _loadLocalData(prefs);
@@ -53,7 +56,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
   void _loadLocalData(SharedPreferences prefs) {
     final savedData = prefs.getString('userData');
+
     if (savedData != null) {
+      if (!mounted) return;
+
       setState(() {
         userData = jsonDecode(savedData);
         isLoading = false;
@@ -77,18 +83,41 @@ class _CustomDrawerState extends State<CustomDrawer> {
     final primaryColor = const Color(0xFF137FEC);
 
     final List<Map<String, dynamic>> menuItems = [
-      {'name': 'لوحة التحكم', 'icon': Icons.dashboard_rounded, 'path': '/customer/dashboard'},
-      {'name': 'تذكير', 'icon': Icons.notifications_active_rounded, 'path': '/customer/reminders'},
-      {'name': 'تاريخ الخدمة', 'icon': Icons.history_rounded, 'path': '/customer/servicehistory'},
-      {'name': 'حجز صيانة', 'icon': Icons.build_circle_rounded, 'path': '/customer/bookings'},
-      {'name': 'طلب صيانة', 'icon': Icons.access_time_filled_rounded, 'path': '/customer/request'},
+      {
+        'name': 'لوحة التحكم',
+        'icon': Icons.dashboard_rounded,
+        'path': '/customer/dashboard',
+      },
+      {
+        'name': 'تذكير',
+        'icon': Icons.notifications_active_rounded,
+        'path': '/customer/reminders',
+      },
+      {
+        'name': 'تاريخ الخدمة',
+        'icon': Icons.history_rounded,
+        'path': '/customer/servicehistory',
+      },
+      {
+        'name': 'حجز صيانة',
+        'icon': Icons.build_circle_rounded,
+        'path': '/customer/bookings',
+      },
+      {
+        'name': 'طلب صيانة',
+        'icon': Icons.access_time_filled_rounded,
+        'path': '/customer/request',
+      },
       {'name': 'المساعد الذكي', 'icon': Icons.smart_toy_rounded, 'path': '/ai'},
     ];
 
     return Drawer(
       backgroundColor: isDark ? const Color(0xFF0F1323) : Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(topRight: Radius.circular(30), bottomRight: Radius.circular(30)),
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
       ),
       child: Column(
         children: [
@@ -138,20 +167,36 @@ class _CustomDrawerState extends State<CustomDrawer> {
     );
   }
 
-  Widget _buildMenuItem(BuildContext context, {required String name, required IconData icon, required bool isActive, required Color primaryColor, required bool isDark, required VoidCallback onTap}) {
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required String name,
+    required IconData icon,
+    required bool isActive,
+    required Color primaryColor,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       child: ListTile(
         onTap: onTap,
         selected: isActive,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        selectedTileColor: isDark ? primaryColor.withOpacity(0.1) : const Color(0xFFE5F1FD),
-        leading: Icon(icon, color: isActive ? primaryColor : Colors.grey, size: 22),
+        selectedTileColor: isDark
+            ? primaryColor.withOpacity(0.1)
+            : const Color(0xFFE5F1FD),
+        leading: Icon(
+          icon,
+          color: isActive ? primaryColor : Colors.grey,
+          size: 22,
+        ),
         title: Text(
           name,
           style: TextStyle(
             fontSize: 15,
-            color: isActive ? primaryColor : (isDark ? Colors.grey[300] : Colors.grey[700]),
+            color: isActive
+                ? primaryColor
+                : (isDark ? Colors.grey[300] : Colors.grey[700]),
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -159,8 +204,14 @@ class _CustomDrawerState extends State<CustomDrawer> {
     );
   }
 
-  Widget _buildProfileSection(BuildContext context, bool isDark, Color primaryColor) {
-    final String fullName = userData != null ? "${userData!['firstName']} ${userData!['lastName']}" : "تحميل...";
+  Widget _buildProfileSection(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+  ) {
+    final String fullName = userData != null
+        ? "${userData!['firstName']} ${userData!['lastName']}"
+        : "تحميل...";
     final String role = userData?['role'] == 1 ? "حساب عميل" : "حساب مستخدم";
     final String? photoUrl = userData?['profilePhotoUrl'];
 
@@ -168,7 +219,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? primaryColor.withOpacity(0.05) : const Color(0xFFF9FAFB),
+        color: isDark
+            ? primaryColor.withOpacity(0.05)
+            : const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(25),
         border: Border.all(color: primaryColor.withOpacity(0.15)),
       ),
@@ -187,8 +240,12 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 ),
                 child: ClipOval(
                   child: photoUrl != null && photoUrl.isNotEmpty
-                      ? Image.network(photoUrl, fit: BoxFit.cover, 
-                          errorBuilder: (_, __, ___) => _buildInitial(fullName, primaryColor))
+                      ? Image.network(
+                          photoUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              _buildInitial(fullName, primaryColor),
+                        )
                       : _buildInitial(fullName, primaryColor),
                 ),
               ),
@@ -199,7 +256,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   children: [
                     Text(
                       fullName,
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : Colors.black87),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
@@ -221,7 +282,8 @@ class _CustomDrawerState extends State<CustomDrawer> {
             primaryColor: primaryColor,
             onTap: () {
               Navigator.pop(context);
-              if (widget.currentRoute != '/customer/profilesettings') Navigator.pushNamed(context, '/customer/profilesettings');
+              if (widget.currentRoute != '/customer/profilesettings')
+                Navigator.pushNamed(context, '/customer/profilesettings');
             },
           ),
           const SizedBox(height: 8),
@@ -244,31 +306,58 @@ class _CustomDrawerState extends State<CustomDrawer> {
     return Center(
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : "U",
-        style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 18),
+        style: TextStyle(
+          color: primaryColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
       ),
     );
   }
 
-  Widget _buildActionBtn(BuildContext context, {required IconData icon, required String label, required bool isActive, required bool isDark, required Color primaryColor, required VoidCallback onTap, bool isLogout = false}) {
+  Widget _buildActionBtn(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required bool isDark,
+    required Color primaryColor,
+    required VoidCallback onTap,
+    bool isLogout = false,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         decoration: BoxDecoration(
-          color: isActive ? (isDark ? primaryColor.withOpacity(0.15) : const Color(0xFFE5F1FD)) : Colors.transparent,
+          color: isActive
+              ? (isDark
+                    ? primaryColor.withOpacity(0.15)
+                    : const Color(0xFFE5F1FD))
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: isActive ? primaryColor : (isLogout ? Colors.redAccent : Colors.grey)),
+            Icon(
+              icon,
+              size: 20,
+              color: isActive
+                  ? primaryColor
+                  : (isLogout ? Colors.redAccent : Colors.grey),
+            ),
             const SizedBox(width: 10),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive ? primaryColor : (isLogout ? Colors.redAccent : (isDark ? Colors.grey[300] : Colors.grey[700])),
+                color: isActive
+                    ? primaryColor
+                    : (isLogout
+                          ? Colors.redAccent
+                          : (isDark ? Colors.grey[300] : Colors.grey[700])),
               ),
             ),
           ],

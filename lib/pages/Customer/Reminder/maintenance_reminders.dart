@@ -52,6 +52,49 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
     }
   }
 
+  String getFrequencyLabel(Map<String, dynamic> r) {
+    final rawType = (r['frequencyType'] ?? "").toString().toLowerCase();
+    final val = int.tryParse(r['intervalValue']?.toString() ?? "0") ?? 0;
+    final unitKey = (r['intervalUnit'] ?? "0").toString();
+
+    switch (rawType) {
+      case "0":
+      case "once":
+        return "مرة واحدة";
+
+      case "1":
+      case "daily":
+        return "يومي";
+
+      case "2":
+      case "weekly":
+        return "أسبوعي";
+
+      case "3":
+      case "monthly":
+        return "شهري";
+
+      case "4":
+      case "yearly":
+        return "سنوي";
+
+      case "5":
+      case "custom":
+      case "custominterval":
+        Map<String, String> unitMap = {
+          "0": "أيام",
+          "1": "أسابيع",
+          "2": "شهور",
+          "3": "سنوات",
+        };
+
+        return "كل $val ${unitMap[unitKey] ?? "أيام"}";
+
+      default:
+        return "غير معروف";
+    }
+  }
+
   Future<void> _fetchReminders() async {
     if (_selectedCar == null) return;
     setState(() => _isLoading = true);
@@ -389,8 +432,10 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
 
     final dateTime = DateTime.parse(r['startDate']);
     final dateStr = DateFormat('yyyy/MM/dd').format(dateTime);
-
     String timeStr = "غير محدد";
+    final isOnce =
+        r['frequencyType'].toString().toLowerCase() == "0" ||
+        r['frequencyType'].toString().toLowerCase() == "once";
 
     if (r['preferredNotificationTime'] != null &&
         r['preferredNotificationTime'].toString().isNotEmpty) {
@@ -537,9 +582,9 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
                   children: [
                     const Icon(Icons.sync, size: 16, color: Colors.blue),
                     const SizedBox(width: 6),
-                    const Text(
-                      "متكرر",
-                      style: TextStyle(
+                    Text(
+                      getFrequencyLabel(r),
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -576,7 +621,7 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
           Row(
             children: [
               /// إتمام
-              if (r['status'] != "Completed")
+              if (!isOnce && r['status'] != "Completed")
                 _actionButton(
                   icon: Icons.check,
                   label: "إتمام",
@@ -586,36 +631,40 @@ class _MaintenanceRemindersPageState extends State<MaintenanceRemindersPage> {
                       r['id'].toString(),
                       "complete",
                     );
+
                     if (success) {
                       setState(() => r['status'] = "Completed");
                     }
                   },
                 ),
 
-              const SizedBox(width: 8),
+              if (!isOnce) const SizedBox(width: 8),
 
-              /// إيقاف / تشغيل / تكملة
-              if (r['status'] == "Active")
+              /// إيقاف / تشغيل
+              if (!isOnce && r['status'] == "Active")
                 _actionButton(
                   icon: Icons.pause,
                   label: "إيقاف",
                   color: Colors.orange,
                   onTap: () async {
                     bool success = await _handleAction(r['id'], "pause");
+
                     if (success) {
                       setState(() => r['status'] = "Paused");
-                      _showSnackBar("تم إيقاف التذكير بنجاح");
                     }
                   },
                 )
-              else if (r['status'] == "Paused")
+              else if (!isOnce && r['status'] == "Paused")
                 _actionButton(
                   icon: Icons.play_arrow,
-                  label: "تكملة",
+                  label: "تنشيط",
                   color: Colors.orange,
                   onTap: () async {
                     bool success = await _handleAction(r['id'], "activate");
-                    if (success) setState(() => r['status'] = "Active");
+
+                    if (success) {
+                      setState(() => r['status'] = "Active");
+                    }
                   },
                 ),
 
