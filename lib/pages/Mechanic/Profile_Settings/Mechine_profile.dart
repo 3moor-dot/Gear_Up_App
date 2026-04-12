@@ -340,7 +340,7 @@ class _MachineProfilePageState extends State<MachineProfilePage> {
   }
 
   Widget _customButton({required String label, required Color color, required VoidCallback? onPressed, bool isOutline = false, bool isLoading = false}) {
-    return Container(
+    return SizedBox(
       height: 50,
       child: ElevatedButton(
         onPressed: onPressed,

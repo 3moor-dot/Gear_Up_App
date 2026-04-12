@@ -11,6 +11,7 @@
         "flutter",
         "flutter_animate",
         "flutter_localizations",
+        "flutter_markdown",
         "flutter_staggered_animations",
         "font_awesome_flutter",
         "geolocator",
@@ -55,7 +56,6 @@
       ]
     },
     {
-<<<<<<< HEAD
       "name": "google_maps_flutter",
       "version": "2.17.0",
       "dependencies": [
@@ -104,8 +104,6 @@
       ]
     },
     {
-=======
->>>>>>> parent of 707c579 (Add Chatbot)
       "name": "signalr_netcore",
       "version": "1.4.4",
       "dependencies": [
@@ -321,7 +319,6 @@
       ]
     },
     {
-<<<<<<< HEAD
       "name": "google_maps_flutter_web",
       "version": "0.6.2",
       "dependencies": [
@@ -489,8 +486,6 @@
       ]
     },
     {
-=======
->>>>>>> parent of 707c579 (Add Chatbot)
       "name": "message_pack_dart",
       "version": "2.0.1",
       "dependencies": []
@@ -778,7 +773,6 @@
       ]
     },
     {
-<<<<<<< HEAD
       "name": "stream_transform",
       "version": "2.1.1",
       "dependencies": []
@@ -863,8 +857,6 @@
       ]
     },
     {
-=======
->>>>>>> parent of 707c579 (Add Chatbot)
       "name": "uuid",
       "version": "4.5.3",
       "dependencies": [

@@ -176,8 +176,9 @@ class _SchedulePageState extends State<SchedulePage> {
             ),
             itemCount: daysInMonth + offset,
             itemBuilder: (context, index) {
-              if (index < offset)
+              if (index < offset) {
                 return const SizedBox.shrink(); // المربعات الفارغة قبل بداية الشهر
+              }
 
               int day = index - offset + 1;
               bool isSelected =

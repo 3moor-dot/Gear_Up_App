@@ -108,7 +108,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
         'icon': Icons.access_time_filled_rounded,
         'path': '/customer/request',
       },
-      {'name': 'المساعد الذكي', 'icon': Icons.smart_toy_rounded, 'path': '/ai'},
+      {
+        'name': 'المساعد الذكي',
+        'icon': Icons.smart_toy_rounded,
+        'path': '/customer/chatbot'
+      },
     ];
 
     return Drawer(
@@ -282,8 +286,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
             primaryColor: primaryColor,
             onTap: () {
               Navigator.pop(context);
-              if (widget.currentRoute != '/customer/profilesettings')
+              if (widget.currentRoute != '/customer/profilesettings') {
                 Navigator.pushNamed(context, '/customer/profilesettings');
+              }
             },
           ),
           const SizedBox(height: 8),

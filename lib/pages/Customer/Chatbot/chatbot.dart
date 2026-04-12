@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_markdown/flutter_markdown.dart'; // أضف هذه المكتبة في pubspec.yaml
 
 import '../../../components/Customer/customer_header.dart';
 import '../../../components/Customer/customer_sidebar.dart';
@@ -625,8 +625,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       final XFile? image = await _picker.pickImage(
                         source: ImageSource.gallery,
                       );
-                      if (image != null)
+                      if (image != null) {
                         setState(() => _selectedImage = File(image.path));
+                      }
                     },
                   ),
                   Expanded(
