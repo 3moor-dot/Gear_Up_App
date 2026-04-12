@@ -13,7 +13,6 @@ import 'package:gear_up_app/pages/Customer/Service History/service_history.dart'
 import 'package:gear_up_app/pages/Customer/Maintenance_Bookings/maintenance_bookings.dart';
 import 'package:gear_up_app/pages/Customer/Maintenance_Request/maintenance_request.dart';
 import 'package:gear_up_app/pages/Customer/Profile_Settings/profile_settings.dart';
-import 'package:gear_up_app/pages/Customer/Chatbot/chatbot.dart';
 
 import 'package:gear_up_app/pages/Mechanic/Mechanic_Dashboard/mechanic_dashboard.dart';
 import 'package:gear_up_app/pages/Mechanic/Schedule/Schedule.dart';
@@ -81,7 +80,6 @@ class GearUpApp extends StatelessWidget {
         '/customer/request': (context) => const MaintenanceRequestPage(),
         '/customer/profilesettings': (context) => const ProfileSettingsPage(),
         '/customer/notifications': (context) => const NotificationsPage(),
-        '/customer/chatbot': (context) => const ChatbotPage(),
 
                     /* MECHANIC PAGES */
         '/mechanic/dashboard': (context) => const MachineDashboard(),
