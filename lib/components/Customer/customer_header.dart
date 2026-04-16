@@ -91,38 +91,7 @@ class DashboardHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          // Search Bar
-          Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.05)
-                  : const Color(0xFFF3F8FF),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: isDark ? Colors.white10 : Colors.transparent,
-              ),
-            ),
-            child: TextField(
-              textAlign: TextAlign.right,
-              decoration: InputDecoration(
-                hintText: "ابحث عن الحجوزات، العملاء، أو المواعيد...",
-                hintStyle: TextStyle(
-                  color: isDark ? Colors.grey[500] : Colors.grey[400],
-                  fontSize: 13,
-                ),
-                suffixIcon: const Icon(
-                  Icons.search_rounded,
-                  color: Color(0xFF137FEC),
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 15,
-                ),
-              ),
-            ),
-          ),
+          
         ],
       ),
     );

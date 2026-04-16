@@ -78,7 +78,7 @@ class GearUpApp extends StatelessWidget {
         '/customer/reminders': (context) => const MaintenanceRemindersPage(),
         '/customer/servicehistory': (context) => const ServiceHistoryPage(),
         '/customer/bookings': (context) => const MaintenanceBookingsPage(),
-        '/customer/request': (context) => const MaintenanceRequestPage(),
+        '/customer/request': (context) => const MaintenanceRequestScreen(),
         '/customer/profilesettings': (context) => const ProfileSettingsPage(),
         '/customer/notifications': (context) => const NotificationsPage(),
         '/customer/chatbot': (context) => const ChatbotPage(),

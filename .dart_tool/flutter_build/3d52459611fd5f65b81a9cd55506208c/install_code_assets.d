@@ -1,0 +1,1 @@
+ /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/flutter_build/3d52459611fd5f65b81a9cd55506208c/native_assets.json:  /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/objective_c.dylib

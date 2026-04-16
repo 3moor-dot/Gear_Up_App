@@ -7,10 +7,12 @@
       "name": "gear_up_app",
       "version": "1.0.0+1",
       "dependencies": [
+        "awesome_dialog",
         "cupertino_icons",
         "flutter",
         "flutter_animate",
         "flutter_localizations",
+        "flutter_map",
         "flutter_markdown",
         "flutter_staggered_animations",
         "font_awesome_flutter",
@@ -20,6 +22,7 @@
         "http",
         "image_picker",
         "intl",
+        "latlong2",
         "provider",
         "shared_preferences",
         "signalr_netcore",
@@ -53,6 +56,39 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "latlong2",
+      "version": "0.9.1",
+      "dependencies": [
+        "intl"
+      ]
+    },
+    {
+      "name": "flutter_map",
+      "version": "8.3.0",
+      "dependencies": [
+        "async",
+        "collection",
+        "dart_earcut",
+        "dart_polylabel2",
+        "flutter",
+        "http",
+        "latlong2",
+        "meta",
+        "path",
+        "path_provider",
+        "proj4dart",
+        "uuid"
+      ]
+    },
+    {
+      "name": "awesome_dialog",
+      "version": "3.3.0",
+      "dependencies": [
+        "flutter",
+        "rive"
       ]
     },
     {
@@ -316,6 +352,66 @@
         "stream_channel",
         "string_scanner",
         "term_glyph"
+      ]
+    },
+    {
+      "name": "uuid",
+      "version": "4.5.3",
+      "dependencies": [
+        "crypto",
+        "fixnum"
+      ]
+    },
+    {
+      "name": "proj4dart",
+      "version": "3.0.0",
+      "dependencies": [
+        "meta",
+        "mgrs_dart",
+        "wkt_parser"
+      ]
+    },
+    {
+      "name": "path_provider",
+      "version": "2.1.5",
+      "dependencies": [
+        "flutter",
+        "path_provider_android",
+        "path_provider_foundation",
+        "path_provider_linux",
+        "path_provider_platform_interface",
+        "path_provider_windows"
+      ]
+    },
+    {
+      "name": "dart_polylabel2",
+      "version": "1.0.0",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
+      "name": "dart_earcut",
+      "version": "1.2.0",
+      "dependencies": []
+    },
+    {
+      "name": "async",
+      "version": "2.13.0",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
+      "name": "rive",
+      "version": "0.14.5",
+      "dependencies": [
+        "flutter",
+        "flutter_web_plugins",
+        "meta",
+        "rive_native"
       ]
     },
     {
@@ -607,14 +703,6 @@
       ]
     },
     {
-      "name": "async",
-      "version": "2.13.0",
-      "dependencies": [
-        "collection",
-        "meta"
-      ]
-    },
-    {
       "name": "shared_preferences_windows",
       "version": "2.4.1",
       "dependencies": [
@@ -670,18 +758,6 @@
       "dependencies": [
         "flutter",
         "shared_preferences_platform_interface"
-      ]
-    },
-    {
-      "name": "path_provider",
-      "version": "2.1.5",
-      "dependencies": [
-        "flutter",
-        "path_provider_android",
-        "path_provider_foundation",
-        "path_provider_linux",
-        "path_provider_platform_interface",
-        "path_provider_windows"
       ]
     },
     {
@@ -773,6 +849,95 @@
       ]
     },
     {
+      "name": "fixnum",
+      "version": "1.1.1",
+      "dependencies": []
+    },
+    {
+      "name": "wkt_parser",
+      "version": "2.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "mgrs_dart",
+      "version": "3.0.0",
+      "dependencies": [
+        "unicode"
+      ]
+    },
+    {
+      "name": "path_provider_windows",
+      "version": "2.3.0",
+      "dependencies": [
+        "ffi",
+        "flutter",
+        "path",
+        "path_provider_platform_interface"
+      ]
+    },
+    {
+      "name": "path_provider_platform_interface",
+      "version": "2.1.2",
+      "dependencies": [
+        "flutter",
+        "platform",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "path_provider_linux",
+      "version": "2.2.1",
+      "dependencies": [
+        "ffi",
+        "flutter",
+        "path",
+        "path_provider_platform_interface",
+        "xdg_directories"
+      ]
+    },
+    {
+      "name": "path_provider_foundation",
+      "version": "2.6.0",
+      "dependencies": [
+        "ffi",
+        "flutter",
+        "objective_c",
+        "path_provider_platform_interface"
+      ]
+    },
+    {
+      "name": "path_provider_android",
+      "version": "2.2.22",
+      "dependencies": [
+        "flutter",
+        "path_provider_platform_interface"
+      ]
+    },
+    {
+      "name": "rive_native",
+      "version": "0.1.5",
+      "dependencies": [
+        "args",
+        "ffi",
+        "flutter",
+        "flutter_web_plugins",
+        "graphs",
+        "http",
+        "meta",
+        "path",
+        "plugin_platform_interface",
+        "vector_math",
+        "web"
+      ]
+    },
+    {
+      "name": "flutter_web_plugins",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
       "name": "stream_transform",
       "version": "2.1.1",
       "dependencies": []
@@ -791,13 +956,6 @@
       "dependencies": [
         "meta",
         "web"
-      ]
-    },
-    {
-      "name": "flutter_web_plugins",
-      "version": "0.0.0",
-      "dependencies": [
-        "flutter"
       ]
     },
     {
@@ -854,14 +1012,6 @@
         "ffi",
         "meta",
         "xml"
-      ]
-    },
-    {
-      "name": "uuid",
-      "version": "4.5.3",
-      "dependencies": [
-        "crypto",
-        "fixnum"
       ]
     },
     {
@@ -955,25 +1105,6 @@
       ]
     },
     {
-      "name": "path_provider_windows",
-      "version": "2.3.0",
-      "dependencies": [
-        "ffi",
-        "flutter",
-        "path",
-        "path_provider_platform_interface"
-      ]
-    },
-    {
-      "name": "path_provider_platform_interface",
-      "version": "2.1.2",
-      "dependencies": [
-        "flutter",
-        "platform",
-        "plugin_platform_interface"
-      ]
-    },
-    {
       "name": "file",
       "version": "7.0.1",
       "dependencies": [
@@ -982,38 +1113,55 @@
       ]
     },
     {
-      "name": "path_provider_linux",
-      "version": "2.2.1",
-      "dependencies": [
-        "ffi",
-        "flutter",
-        "path",
-        "path_provider_platform_interface",
-        "xdg_directories"
-      ]
-    },
-    {
-      "name": "path_provider_foundation",
-      "version": "2.6.0",
-      "dependencies": [
-        "ffi",
-        "flutter",
-        "objective_c",
-        "path_provider_platform_interface"
-      ]
-    },
-    {
-      "name": "path_provider_android",
-      "version": "2.2.22",
-      "dependencies": [
-        "flutter",
-        "path_provider_platform_interface"
-      ]
-    },
-    {
       "name": "vm_service",
       "version": "15.0.2",
       "dependencies": []
+    },
+    {
+      "name": "unicode",
+      "version": "1.1.9",
+      "dependencies": [
+        "archive",
+        "simple_sparse_list"
+      ]
+    },
+    {
+      "name": "ffi",
+      "version": "2.1.5",
+      "dependencies": []
+    },
+    {
+      "name": "platform",
+      "version": "3.1.6",
+      "dependencies": []
+    },
+    {
+      "name": "xdg_directories",
+      "version": "1.1.0",
+      "dependencies": [
+        "meta",
+        "path"
+      ]
+    },
+    {
+      "name": "objective_c",
+      "version": "9.3.0",
+      "dependencies": [
+        "code_assets",
+        "collection",
+        "ffi",
+        "hooks",
+        "logging",
+        "native_toolchain_c",
+        "pub_semver"
+      ]
+    },
+    {
+      "name": "graphs",
+      "version": "2.3.2",
+      "dependencies": [
+        "collection"
+      ]
     },
     {
       "name": "html",
@@ -1040,19 +1188,6 @@
       ]
     },
     {
-      "name": "ffi",
-      "version": "2.1.5",
-      "dependencies": []
-    },
-    {
-      "name": "xdg_directories",
-      "version": "1.1.0",
-      "dependencies": [
-        "meta",
-        "path"
-      ]
-    },
-    {
       "name": "xml",
       "version": "6.6.1",
       "dependencies": [
@@ -1060,11 +1195,6 @@
         "meta",
         "petitparser"
       ]
-    },
-    {
-      "name": "fixnum",
-      "version": "1.1.1",
-      "dependencies": []
     },
     {
       "name": "shelf",
@@ -1079,36 +1209,16 @@
       ]
     },
     {
-      "name": "platform",
-      "version": "3.1.6",
+      "name": "simple_sparse_list",
+      "version": "0.1.4",
       "dependencies": []
     },
     {
-      "name": "objective_c",
-      "version": "9.3.0",
+      "name": "archive",
+      "version": "4.0.9",
       "dependencies": [
-        "code_assets",
-        "collection",
-        "ffi",
-        "hooks",
-        "logging",
-        "native_toolchain_c",
-        "pub_semver"
-      ]
-    },
-    {
-      "name": "csslib",
-      "version": "1.0.2",
-      "dependencies": [
-        "source_span"
-      ]
-    },
-    {
-      "name": "petitparser",
-      "version": "7.0.2",
-      "dependencies": [
-        "collection",
-        "meta"
+        "path",
+        "posix"
       ]
     },
     {
@@ -1148,6 +1258,30 @@
       "dependencies": [
         "collection",
         "hooks"
+      ]
+    },
+    {
+      "name": "csslib",
+      "version": "1.0.2",
+      "dependencies": [
+        "source_span"
+      ]
+    },
+    {
+      "name": "petitparser",
+      "version": "7.0.2",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
+      "name": "posix",
+      "version": "6.5.0",
+      "dependencies": [
+        "ffi",
+        "meta",
+        "path"
       ]
     },
     {

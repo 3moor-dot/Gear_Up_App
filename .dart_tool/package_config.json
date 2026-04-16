@@ -2,6 +2,12 @@
   "configVersion": 2,
   "packages": [
     {
+      "name": "archive",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/archive-4.0.9",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "args",
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/args-2.7.0",
       "packageUri": "lib/",
@@ -12,6 +18,12 @@
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/async-2.13.0",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "awesome_dialog",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/awesome_dialog-3.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "boolean_selector",
@@ -66,6 +78,18 @@
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/cupertino_icons-1.0.8",
       "packageUri": "lib/",
       "languageVersion": "3.1"
+    },
+    {
+      "name": "dart_earcut",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/dart_earcut-1.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "dart_polylabel2",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/dart_polylabel2-1.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
     },
     {
       "name": "dbus",
@@ -144,6 +168,12 @@
       "rootUri": "file:///usr/local/share/flutter/packages/flutter_localizations",
       "packageUri": "lib/",
       "languageVersion": "3.9"
+    },
+    {
+      "name": "flutter_map",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/flutter_map-8.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
     },
     {
       "name": "flutter_markdown",
@@ -284,6 +314,12 @@
       "languageVersion": "3.9"
     },
     {
+      "name": "graphs",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/graphs-2.3.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "gsettings",
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/gsettings-0.2.8",
       "packageUri": "lib/",
@@ -368,6 +404,12 @@
       "languageVersion": "3.3"
     },
     {
+      "name": "latlong2",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/latlong2-0.9.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "leak_tracker",
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/leak_tracker-11.0.2",
       "packageUri": "lib/",
@@ -426,6 +468,12 @@
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/meta-1.17.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
+    },
+    {
+      "name": "mgrs_dart",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/mgrs_dart-3.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
     },
     {
       "name": "mime",
@@ -530,6 +578,18 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "posix",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/posix-6.5.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "proj4dart",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/proj4dart-3.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "provider",
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/provider-6.1.5+1",
       "packageUri": "lib/",
@@ -540,6 +600,18 @@
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/pub_semver-2.2.0",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "rive",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/rive-0.14.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "rive_native",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/rive_native-0.1.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
     },
     {
       "name": "sanitize_html",
@@ -600,6 +672,12 @@
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/signalr_netcore-1.4.4",
       "packageUri": "lib/",
       "languageVersion": "2.12"
+    },
+    {
+      "name": "simple_sparse_list",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/simple_sparse_list-0.1.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
     },
     {
       "name": "sky_engine",
@@ -672,6 +750,12 @@
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/typed_data-1.4.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
+    },
+    {
+      "name": "unicode",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/unicode-1.1.9",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
     },
     {
       "name": "url_launcher",
@@ -762,6 +846,12 @@
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/win32-5.15.0",
       "packageUri": "lib/",
       "languageVersion": "3.8"
+    },
+    {
+      "name": "wkt_parser",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/wkt_parser-2.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "xdg_directories",
