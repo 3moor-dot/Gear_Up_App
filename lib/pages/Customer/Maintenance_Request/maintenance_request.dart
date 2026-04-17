@@ -751,11 +751,11 @@ out;
       isDismissible: false,
       enableDrag: false,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (_) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            // 🔥 أهم سطر في الحل
             _onTimerTick = () => setSheetState(() {});
 
             return DraggableScrollableSheet(
@@ -764,13 +764,15 @@ out;
               maxChildSize: 0.95,
               builder: (_, controller) {
                 return Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF0B1220) // نفس خلفية الدارك
+                        : Colors.white,
+                    borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(30),
                     ),
                   ),
-                  child: _buildSearchingUI(),
+                  child: _buildSearchingUI(isDark), // 👈 ابعت isDark
                 );
               },
             );
@@ -781,7 +783,7 @@ out;
   }
 
   // واجهة البحث (نفس شكل الدائرة في رياكت)
-  Widget _buildSearchingUI() {
+  Widget _buildSearchingUI(bool isDark) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -792,25 +794,28 @@ out;
           width: 50,
           height: 5,
           decoration: BoxDecoration(
-            color: Colors.grey[300],
+            color: isDark ? Colors.grey[700] : Colors.grey[300],
             borderRadius: BorderRadius.circular(10),
           ),
         ),
 
         const SizedBox(height: 30),
 
-        const Text(
+        Text(
           "جاري البحث عن ميكانيكي قريب",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        Text(
           "سيتم إشعارك فور قبول أحد الميكانيكيين",
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey),
         ),
-
         const SizedBox(height: 40),
 
         Stack(
@@ -844,6 +849,9 @@ out;
         const SizedBox(height: 30),
 
         TextButton.icon(
+          style: TextButton.styleFrom(
+            foregroundColor: isDark ? Colors.white : Colors.black,
+          ),
           onPressed: () {
             _countdownTimer?.cancel();
             _pollingTimer?.cancel();

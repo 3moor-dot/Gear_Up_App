@@ -77,10 +77,16 @@ class _MyCarsTabState extends State<MyCarsTab> {
 
     try {
       final token = await _getToken();
-      final request =
-          http.MultipartRequest('POST', Uri.parse("$baseUrl/register"));
+
+      if (!mounted) return;
+
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse("$baseUrl/register"),
+      );
 
       request.headers['Authorization'] = "Bearer $token";
+
       request.fields.addAll({
         "Brand": _brandController.text,
         "Model": _modelController.text,
@@ -89,18 +95,26 @@ class _MyCarsTabState extends State<MyCarsTab> {
       });
 
       request.files.add(
-          await http.MultipartFile.fromPath('CarPhoto', _newCarImage!.path));
+        await http.MultipartFile.fromPath('CarPhoto', _newCarImage!.path),
+      );
 
       final response = await request.send();
+
+      if (!mounted) return;
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         _snack("تمت إضافة السيارة بنجاح", Colors.green);
         _clearAddForm();
         fetchCars();
       }
     } catch (_) {
-      _snack("فشل إضافة السيارة", Colors.red);
+      if (mounted) {
+        _snack("فشل إضافة السيارة", Colors.red);
+      }
     } finally {
-      setState(() => loading = false);
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -109,8 +123,7 @@ class _MyCarsTabState extends State<MyCarsTab> {
 
     try {
       final token = await _getToken();
-      final request =
-          http.MultipartRequest('PUT', Uri.parse("$baseUrl/$id"));
+      final request = http.MultipartRequest('PUT', Uri.parse("$baseUrl/$id"));
 
       request.headers['Authorization'] = "Bearer $token";
       request.fields.addAll({
@@ -121,8 +134,9 @@ class _MyCarsTabState extends State<MyCarsTab> {
       });
 
       if (_editCarImage != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-            'CarPhoto', _editCarImage!.path));
+        request.files.add(
+          await http.MultipartFile.fromPath('CarPhoto', _editCarImage!.path),
+        );
       }
 
       final response = await request.send();
@@ -210,8 +224,12 @@ class _MyCarsTabState extends State<MyCarsTab> {
                 setState(() => expandedCarId = expanded ? null : car['id']),
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(car['carPhotoUrl'],
-                  width: 60, height: 40, fit: BoxFit.cover),
+              child: Image.network(
+                car['carPhotoUrl'],
+                width: 60,
+                height: 40,
+                fit: BoxFit.cover,
+              ),
             ),
             title: Text(
               "${car['brand']} ${car['model']}",
@@ -224,12 +242,13 @@ class _MyCarsTabState extends State<MyCarsTab> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                    icon:
-                        const Icon(Icons.edit, color: Colors.amber),
-                    onPressed: () => _startEdit(car)),
+                  icon: const Icon(Icons.edit, color: Colors.amber),
+                  onPressed: () => _startEdit(car),
+                ),
                 IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => deleteCar(car['id'])),
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => deleteCar(car['id']),
+                ),
                 Icon(
                   expanded
                       ? Icons.keyboard_arrow_up
@@ -277,10 +296,7 @@ class _MyCarsTabState extends State<MyCarsTab> {
   }
 
   // ================= HELPERS =================
-  Widget _card(
-          {required Widget child,
-          required bool isDark,
-          Color? border}) =>
+  Widget _card({required Widget child, required bool isDark, Color? border}) =>
       Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
@@ -289,96 +305,105 @@ class _MyCarsTabState extends State<MyCarsTab> {
           borderRadius: BorderRadius.circular(20),
           border: border != null ? Border.all(color: border) : null,
           boxShadow: [
-            BoxShadow(
-              blurRadius: 20,
-              color: Colors.black.withOpacity(0.05),
-            ),
+            BoxShadow(blurRadius: 20, color: Colors.black.withOpacity(0.05)),
           ],
         ),
         child: child,
       );
 
-  Widget _field(String label, TextEditingController c, bool isDark,
-          {bool number = false}) =>
-      Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: TextField(
-          controller: c,
-          keyboardType: number ? TextInputType.number : TextInputType.text,
-          decoration: InputDecoration(
-            labelText: label,
-            labelStyle: TextStyle(color: primaryColor),
-            filled: true,
-            fillColor:
-                isDark ? Colors.black26 : Colors.white,
-            border:
-                OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-          ),
-          style: TextStyle(color: isDark ? Colors.white : Colors.black),
-        ),
-      );
+  Widget _field(
+    String label,
+    TextEditingController c,
+    bool isDark, {
+    bool number = false,
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: TextField(
+      controller: c,
+      keyboardType: number ? TextInputType.number : TextInputType.text,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: primaryColor),
+        filled: true,
+        fillColor: isDark ? Colors.black26 : Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+      ),
+      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+    ),
+  );
 
   Widget _imagePicker(bool isNew) => GestureDetector(
-        onTap: () async {
-          final img =
-              await ImagePicker().pickImage(source: ImageSource.gallery);
-          if (img != null) {
-            setState(() =>
-                isNew ? _newCarImage = File(img.path) : _editCarImage = File(img.path));
-          }
-        },
-        child: CircleAvatar(
-          radius: 35,
-          backgroundColor: primaryColor.withOpacity(0.15),
-          child: const Icon(Icons.camera_alt, color: Colors.white),
-        ),
-      );
+    onTap: () async {
+      final img = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (img != null) {
+        setState(
+          () => isNew
+              ? _newCarImage = File(img.path)
+              : _editCarImage = File(img.path),
+        );
+      }
+    },
+    child: CircleAvatar(
+      radius: 35,
+      backgroundColor: primaryColor.withOpacity(0.15),
+      child: const Icon(Icons.camera_alt, color: Colors.white),
+    ),
+  );
 
-  Widget _primaryButton(
-          {required String text,
-          required bool loading,
-          required VoidCallback onTap}) =>
-      SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton(
-          onPressed: loading ? null : onTap,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          ),
-          child: loading
-              ? const CircularProgressIndicator(color: Colors.white)
-              : Text(text,
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-        ),
-      );
+  Widget _primaryButton({
+    required String text,
+    required bool loading,
+    required VoidCallback onTap,
+  }) => SizedBox(
+    width: double.infinity,
+    height: 50,
+    child: ElevatedButton(
+      onPressed: loading ? null : onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      ),
+      child: loading
+          ? const CircularProgressIndicator(color: Colors.white)
+          : Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+    ),
+  );
 
   Widget _info(String label, String value, bool isDark) => ListTile(
-        dense: true,
-        title: Text(label,
-            style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white70 : Colors.grey)),
-        subtitle: Text(value,
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black)),
-      );
+    dense: true,
+    title: Text(
+      label,
+      style: TextStyle(
+        fontSize: 12,
+        color: isDark ? Colors.white70 : Colors.grey,
+      ),
+    ),
+    subtitle: Text(
+      value,
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: isDark ? Colors.white : Colors.black,
+      ),
+    ),
+  );
 
   Widget _sectionTitle(String title) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: primaryColor,
-            fontSize: 20,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Text(
+      title,
+      style: TextStyle(
+        fontWeight: FontWeight.w900,
+        color: primaryColor,
+        fontSize: 20,
+      ),
+    ),
+  );
 
   void _startEdit(dynamic car) {
     setState(() {
@@ -400,7 +425,10 @@ class _MyCarsTabState extends State<MyCarsTab> {
   }
 
   void _snack(String msg, Color color) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 }
