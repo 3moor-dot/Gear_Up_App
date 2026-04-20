@@ -54,6 +54,8 @@ dependencies:
   awesome_dialog: ^3.3.0
   flutter_map: ^8.3.0
   latlong2: ^0.9.1
+  flutter_map_marker_cluster: ^8.2.2
+  lucide_icons: ^0.257.0
 
 
 dev_dependencies:

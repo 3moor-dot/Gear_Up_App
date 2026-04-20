@@ -1,12 +1,10 @@
-// ignore_for_file: avoid_print
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:gear_up_app/pages/Customer/Maintenance_Request/request_tracking_screen.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,7 +43,15 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
   int _requestType = 1;
   int? _serviceType;
   LatLng? _currentLocation;
+  Set<Marker> _markers = {};
+  GoogleMapController? _mapController;
   String? _requestId;
+  final String _darkMapStyle = '''[
+  {
+    "elementType": "geometry",
+    "stylers": [{"color": "#1d2c4d"}]
+  }
+]''';
   late List<dynamic> _acceptedMechanics = [];
   final List<Map<String, dynamic>> _serviceTypes = [
     {"id": 1, "title": "تشخيص", "icon": "🛠️"},
@@ -55,7 +61,6 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
   ];
   int _serviceMode = 2;
   VoidCallback? _onMechanicsUpdated;
-  List<Marker> _markers = [];
 
   @override
   void initState() {
@@ -244,7 +249,7 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
 
         _titleWithUnderline("تحديد الموقع", primaryColor),
         const SizedBox(height: 15),
-        _buildMapPlaceholder(isDark),
+        _buildGoogleMap(isDark),
         const SizedBox(height: 25),
 
         _titleWithUnderline("تفاصيل العطل", primaryColor),
@@ -332,6 +337,45 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
         _buildSubmitButton(isDark),
         const SizedBox(height: 100), // مساحة إضافية للسكرول
       ],
+    );
+  }
+
+  Widget _buildGoogleMap(bool isDark) {
+    return Container(
+      height: 250,
+      width: double.infinity,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(25)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(25),
+        child: _currentLocation == null
+            ? InkWell(
+                onTap: _getCurrentLocation,
+                child: Center(
+                  child: Text(
+                    "اضغط لتحديد موقعك",
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+              )
+            : GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: _currentLocation!,
+                  zoom: 15,
+                ),
+                onMapCreated: (controller) {
+                  _mapController = controller; // 👈 أهم سطر
+
+                  if (isDark && _mapController != null) {
+                    _mapController!.setMapStyle(_darkMapStyle);
+                  }
+                },
+                markers: _markers,
+                myLocationEnabled: true,
+                zoomControlsEnabled: false,
+              ),
+      ),
     );
   }
 
@@ -489,44 +533,6 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
     );
   }
 
-  Widget _buildMapPlaceholder(bool isDark) {
-    return Container(
-      height: 250,
-      width: double.infinity,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(25)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(25),
-        child: _currentLocation == null
-            ? InkWell(
-                onTap: _getCurrentLocation,
-                child: Center(child: Text("اضغط لتحديد موقعك")),
-              )
-            : FlutterMap(
-                options: MapOptions(
-                  initialCenter: LatLng(
-                    _currentLocation!.latitude,
-                    _currentLocation!.longitude,
-                  ),
-                  initialZoom: 15,
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=d8a2a22a-f256-4b71-8d70-9bfa62f0c34a",
-                    additionalOptions: {
-                      'api_key': 'd8a2a22a-f256-4b71-8d70-9bfa62f0c34a',
-                    },
-                  ),
-                  // 👇 ماركر موقعك
-                  MarkerLayer(
-                    markers: _markers, // بدل ما تحط ماركر واحد بس
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
   Widget _buildImagePicker(bool isDark) {
     return InkWell(
       onTap: () async {
@@ -603,6 +609,11 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
     if (_isPermissionRequesting) return;
 
     setState(() => _isPermissionRequesting = true);
+    if (_currentLocation != null) {
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(_currentLocation!, 15),
+      );
+    }
 
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -649,12 +660,8 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
               _currentLocation = LatLng(position.latitude, position.longitude);
             });
           })
-          .catchError((e) {
-            print("BACKGROUND LOCATION ERROR: $e");
-          });
+          .catchError((e) {});
     } catch (e) {
-      print("LOCATION ERROR: $e");
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("تعذر تحديد الموقع")));
@@ -666,83 +673,117 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
   Future<void> _getNearbyPlaces() async {
     if (_currentLocation == null) return;
 
-    try {
-      final url = Uri.parse('''
-https://overpass-api.de/api/interpreter?data=
-[out:json];
-(
-  node["shop"="car_repair"](around:1500,${_currentLocation!.latitude},${_currentLocation!.longitude});
-  node["amenity"="car_repair"](around:1500,${_currentLocation!.latitude},${_currentLocation!.longitude});
-);
-out;
-''');
+    final apiKey = "YOUR_API_KEY"; // 👈 حط المفتاح هنا
 
-      final response = await http.get(url);
+    final url = Uri.parse(
+      "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+      "?location=${_currentLocation!.latitude},${_currentLocation!.longitude}"
+      "&radius=3000"
+      "&type=car_repair"
+      "&key=$apiKey",
+    );
 
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        print("Error fetching places");
-        return;
-      }
+    final response = await http.get(url);
 
-      final data = json.decode(response.body);
-      final List elements = data['elements'];
+    if (response.statusCode != 200) return;
 
-      List<Marker> markers = [];
+    final data = json.decode(response.body);
+    final results = data['results'];
 
-      // ✅ 1. ماركر موقعك
+    Set<Marker> markers = {};
+
+    // 📍 موقعك
+    markers.add(
+      Marker(
+        markerId: const MarkerId("me"),
+        position: LatLng(
+          _currentLocation!.latitude,
+          _currentLocation!.longitude,
+        ),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      ),
+    );
+
+    // 🔧 الميكانيكيين
+    for (var place in results) {
+      final lat = place['geometry']['location']['lat'];
+      final lng = place['geometry']['location']['lng'];
+
       markers.add(
         Marker(
-          point: LatLng(
-            _currentLocation!.latitude,
-            _currentLocation!.longitude,
-          ),
-          width: 50,
-          height: 50,
-          child: const Icon(Icons.my_location, color: Colors.red, size: 35),
+          markerId: MarkerId(place['place_id']),
+          position: LatLng(lat, lng),
+          onTap: () => _showPlaceDetails(place),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
         ),
       );
-
-      // ✅ 2. الأماكن اللي حواليك (ميكانيكيين)
-      for (var place in elements) {
-        final lat = place['lat'];
-        final lon = place['lon'];
-
-        final name = place['tags']?['name'] ?? "ميكانيكي";
-
-        markers.add(
-          Marker(
-            point: LatLng(lat, lon),
-            width: 80,
-            height: 80,
-            child: Column(
-              children: [
-                const Icon(Icons.build, color: Colors.blue, size: 30),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
-                  color: Colors.white,
-                  child: Text(
-                    name,
-                    style: const TextStyle(fontSize: 10),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
-
-      setState(() {
-        _markers = markers;
-      });
-
-      print("Loaded ${markers.length} places");
-    } catch (e) {
-      print("ERROR: $e");
     }
+
+    setState(() {
+      _markers = markers;
+    });
+  }
+
+  void _showPlaceDetails(dynamic place) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.35,
+          minChildSize: 0.25,
+          maxChildSize: 0.8,
+          builder: (_, controller) {
+            return Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Color(0xFF1E293B)
+                    : Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              child: ListView(
+                controller: controller,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+
+                  Text(
+                    place['name'] ?? "ميكانيكي",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+
+                  Text("⭐ ${place['rating'] ?? 'بدون تقييم'}"),
+
+                  SizedBox(height: 10),
+
+                  Text(place['vicinity'] ?? ""),
+
+                  Text("خدمة إصلاح سيارات قريبة منك"),
+                  SizedBox(height: 20),
+
+                  ElevatedButton(
+                    onPressed: () {},
+                    child: Text("اختيار هذا الميكانيكي"),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showMechanicsSelectionSheet() {
@@ -911,8 +952,11 @@ out;
       final token = prefs.getString('userToken');
       var uri = Uri.parse("https://gearupapp.runasp.net/api/requests");
       var request = http.MultipartRequest("POST", uri);
-
-      request.headers['Authorization'] = 'Bearer $token';
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json', // 👈 مهم
+      });
 
       request.fields.addAll({
         'carId': _selectedCarId!,
@@ -940,19 +984,18 @@ out;
           ), // تغيير image إلى ProblemPhoto
         );
       }
+      debugPrint("➡️ POST: $uri");
+      debugPrint("📦 Fields: ${request.fields}");
+      debugPrint("📸 Has Image: ${_selectedImage != null}");
+      final response = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
 
-      final response = await request.send();
       final respStr = await response.stream.bytesToString();
-      print("Status Code: ${response.statusCode}");
-      print(
-        "Server Response: $respStr",
-      ); // 👈 اطبع هذا السطر في الـ Console وشوف الرسالة
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = json.decode(respStr);
         _requestId = data['requestId']?.toString() ?? data['id']?.toString();
 
-        // تشغيل عداد الوقت
         _timeLeft = 300;
 
         _countdownTimer?.cancel();
@@ -976,9 +1019,9 @@ out;
         _showMechanicsSelectionSheet();
         _startPolling(); // لبدء فحص الميكانيكيين كل 5 ثواني
       } else {
-        // هنا السيرفر رفض الطلب، اطبع السبب
-        print("Failed with error: $respStr");
-        throw Exception("Error $respStr");
+        final errorData = json.decode(respStr);
+        debugPrint("❌ ERROR RESPONSE: $errorData");
+        throw Exception(errorData.toString());
       }
     } catch (e) {
       ScaffoldMessenger.of(
@@ -1007,31 +1050,127 @@ out;
     final response = await http.get(
       Uri.parse(
         "https://gearupapp.runasp.net/api/requests/$_requestId/accepted-mechanics",
-      ), // الرابط الصحيح كما في React
+      ),
       headers: {'Authorization': 'Bearer $token'},
     );
 
-    // إذا وجد ميكانيكيين، أغلق واجهة البحث وانتقل للخطوة 2
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-
-      List<dynamic> mechanicsList = [];
-      // التحقق من مكان القائمة داخل الرد (مثلما فعلت في React)
-      if (data is List) {
-        mechanicsList = data;
-      } else if (data is Map && data['mechanics'] != null) {
-        mechanicsList = data['mechanics'];
-      }
+      List<dynamic> mechanicsList = (data is List)
+          ? data
+          : (data['mechanics'] ?? []);
 
       if (mechanicsList.isNotEmpty) {
+        // 1. إيقاف العدادات والبحث
         _pollingTimer?.cancel();
-        if (Navigator.canPop(context))
-          Navigator.pop(context); // إغلاق الـ BottomSheet
+        _countdownTimer?.cancel();
+
         setState(() {
-          _acceptedMechanics = mechanicsList; // التخزين الصحيح
-          _currentStep = 2; // الانتقال للخطوة التالية
+          _acceptedMechanics = mechanicsList;
         });
+
+        // 2. إظهار الميكانيكيين من أسفل الشاشة
+        _showMechanicsBottomSheet();
       }
+    }
+  }
+
+  void _showMechanicsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.5,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const Text(
+              "الميكانيكيون الذين وافقوا",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _acceptedMechanics.length,
+                itemBuilder: (context, index) {
+                  final mech = _acceptedMechanics[index];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: NetworkImage(
+                        mech['profilePhotoUrl'] ?? '',
+                      ),
+                    ),
+                    title: Text("${mech['firstName']} ${mech['lastName']}"),
+                    subtitle: Text("⭐ ${mech['averageRating'] ?? '5'}"),
+                    trailing: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context); // إغلاق التبويب
+                        _handleSelectMechanic(
+                          mech['mechanicUserId'],
+                        ); // استدعاء دالة الاختيار
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                      ),
+                      child: const Text(
+                        "اختيار",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // دالة اختيار الميكانيكي والتحويل لصفحة التتبع
+  Future<void> _handleSelectMechanic(String mechanicUserId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('userToken');
+
+      final response = await http.post(
+        Uri.parse(
+          "https://gearupapp.runasp.net/api/requests/$_requestId/select-mechanic/$mechanicUserId",
+        ),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        if (mounted) {
+          // ✅ الانتقال الصحيح وتمرير الـ ID الفعلي
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  RequestTrackingScreen(requestId: _requestId!),
+            ),
+          );
+        }
+      } else {
+        print("Error From Server: ${response.body}");
+      }
+    } catch (e) {
+      print("Exception: $e");
     }
   }
 

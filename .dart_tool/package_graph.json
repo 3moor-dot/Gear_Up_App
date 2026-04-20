@@ -13,6 +13,7 @@
         "flutter_animate",
         "flutter_localizations",
         "flutter_map",
+        "flutter_map_marker_cluster",
         "flutter_markdown",
         "flutter_staggered_animations",
         "font_awesome_flutter",
@@ -23,6 +24,7 @@
         "image_picker",
         "intl",
         "latlong2",
+        "lucide_icons",
         "provider",
         "shared_preferences",
         "signalr_netcore",
@@ -56,6 +58,23 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "lucide_icons",
+      "version": "0.257.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
+      "name": "flutter_map_marker_cluster",
+      "version": "8.2.2",
+      "dependencies": [
+        "flutter",
+        "flutter_map",
+        "flutter_map_marker_popup",
+        "latlong2"
       ]
     },
     {
@@ -352,6 +371,17 @@
         "stream_channel",
         "string_scanner",
         "term_glyph"
+      ]
+    },
+    {
+      "name": "flutter_map_marker_popup",
+      "version": "8.1.0",
+      "dependencies": [
+        "animated_stack_widget",
+        "flutter",
+        "flutter_map",
+        "latlong2",
+        "provider"
       ]
     },
     {
@@ -846,6 +876,13 @@
       "dependencies": [
         "source_span",
         "string_scanner"
+      ]
+    },
+    {
+      "name": "animated_stack_widget",
+      "version": "0.0.4",
+      "dependencies": [
+        "flutter"
       ]
     },
     {

@@ -10,15 +10,15 @@
 		</data>
 		<key>flutter_assets/AssetManifest.bin</key>
 		<data>
-		wFoZ5RbQCiIjPKUHdwJ5TNPrD2U=
+		PI3CDKpAtksB4ZWfqb1q08iYuGY=
 		</data>
 		<key>flutter_assets/FontManifest.json</key>
 		<data>
-		Y+lL787YPtpJqxm9pSMXagwNxcE=
+		iK0DjpK9ZqXZqDqVLbUfdH+IHaI=
 		</data>
 		<key>flutter_assets/NOTICES.Z</key>
 		<data>
-		S+/3bfaDYOuhF7vllURfJbJdV8I=
+		rF4+etzhkMIP0z7052EJehuQu9w=
 		</data>
 		<key>flutter_assets/NativeAssetsManifest.json</key>
 		<data>
@@ -66,7 +66,7 @@
 		</data>
 		<key>flutter_assets/kernel_blob.bin</key>
 		<data>
-		6rhEPkZafuZX/nQuuAnDqQo1wSo=
+		yoNRch90/ZeLCHntScTIEPMyG38=
 		</data>
 		<key>flutter_assets/packages/awesome_dialog/assets/flare/error.flr</key>
 		<data>
@@ -148,6 +148,10 @@
 		<data>
 		wXi5Pi49/qOM6ShFisxNZDd2qeY=
 		</data>
+		<key>flutter_assets/packages/lucide_icons/assets/lucide.ttf</key>
+		<data>
+		PVtrWJ92k1jOTnPZTLgZioIfCt8=
+		</data>
 		<key>flutter_assets/shaders/ink_sparkle.frag</key>
 		<data>
 		sxM4vXUdXTlz/NE5jWpDMQiyBlU=
@@ -167,21 +171,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			4v0wAiUgj1EmHsdggBotGsTPGeNx19DVeal/LJ1GLZo=
+			V6i6c9ZG2S/NAIjiam8dT+PdMx4GSnSK1Ut6s16fNOo=
 			</data>
 		</dict>
 		<key>flutter_assets/FontManifest.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			EPTAI8b9dWmvhdaXmBt+e8ZOoDVmqaMyskyHJDBojlE=
+			bxWrpE9b2sbKdAbRbbxXOfY1gmRJ1J8VP34Wk31/tAw=
 			</data>
 		</dict>
 		<key>flutter_assets/NOTICES.Z</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Jb9z+Rw3zLPbDuQ9wfDvUklCuFJVikDth8VxgEcYj94=
+			kHnefQ2f/0PGppxGh7ohzCA1orCxfBGBdWjSV/FWtiQ=
 			</data>
 		</dict>
 		<key>flutter_assets/NativeAssetsManifest.json</key>
@@ -265,7 +269,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			/8kIsIatyOZRZCFT0zu2H9OvtFr2XWLX1DqUmcVJcFw=
+			YAibpRHM/JNIKtCKnc8VVSgRfxabZhDd89MWWfDMH6E=
 			</data>
 		</dict>
 		<key>flutter_assets/packages/awesome_dialog/assets/flare/error.flr</key>
@@ -406,6 +410,13 @@
 			<key>hash2</key>
 			<data>
 			Mfimk/T2qj2UXxKbEmqPgIxFTsrVoNueSgYKp9HpCk0=
+			</data>
+		</dict>
+		<key>flutter_assets/packages/lucide_icons/assets/lucide.ttf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			4hpZTGlxkWXe+AlhO8WV5SZmDZneq2KOBOpSwLROISc=
 			</data>
 		</dict>
 		<key>flutter_assets/shaders/ink_sparkle.frag</key>
