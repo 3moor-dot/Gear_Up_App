@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:gear_up_app/components/Customer/customer_header.dart';
 import 'package:gear_up_app/components/Customer/customer_sidebar.dart';
 
@@ -10,81 +14,194 @@ class ServiceHistoryPage extends StatefulWidget {
 }
 
 class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
+  List<dynamic> historyData = [];
+  bool loading = true;
+
+  int currentPage = 1;
+  final int itemsPerPage = 10;
+
+  // --- Maps زي React ---
+  final Map<String, String> statusMap = {
+    "Submitted": "تم الإرسال",
+    "Dispatching": "جاري التوزيع",
+    "Accepted": "تم القبول",
+    "OnTheWay": "في الطريق",
+    "Arrived": "وصل",
+    "InProgress": "قيد التنفيذ",
+    "Completed": "مكتمل",
+    "Cancelled": "ملغي",
+  };
+
+  final Map<String, Color> statusColorMap = {
+    "Submitted": Colors.grey,
+    "Dispatching": Colors.blue,
+    "Accepted": Colors.blueAccent,
+    "OnTheWay": Colors.purple,
+    "Arrived": Colors.cyan,
+    "InProgress": Colors.orange,
+    "Completed": Colors.green,
+    "Cancelled": Colors.red,
+  };
+
+  final List<String> allowedStatuses = [
+    "Accepted",
+    "OnTheWay",
+    "Arrived",
+    "InProgress",
+    "Completed",
+  ];
+
+  final Map<String, String> serviceTypeMap = {
+    "Diagnosis": "تشخيص",
+    "Tires": "إطارات",
+    "BodyRepair": "إصلاح هيكل",
+    "OilChange": "تغيير زيت",
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    fetchHistory();
+  }
+
+  Future<void> fetchHistory() async {
+    setState(() => loading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("userToken");
+
+      final res = await http.get(
+        Uri.parse("https://gearupapp.runasp.net/api/requests/history"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      final data = json.decode(res.body);
+
+      setState(() {
+        historyData = data["requests"] ?? [];
+        currentPage = 1;
+      });
+    } catch (e) {
+      print(e);
+      setState(() => historyData = []);
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF137FEC);
+
+    final filtered = historyData
+        .where((e) => allowedStatuses.contains(e["status"]))
+        .toList();
+
+    final indexOfLast = currentPage * itemsPerPage;
+    final indexOfFirst = indexOfLast - itemsPerPage;
+
+    final currentItems = filtered.sublist(
+      indexOfFirst,
+      indexOfLast > filtered.length ? filtered.length : indexOfLast,
+    );
+
+    final totalPages = (filtered.length / itemsPerPage).ceil() == 0
+        ? 1
+        : (filtered.length / itemsPerPage).ceil();
 
     return Scaffold(
-      // السايد بار (القائمة الجانبية)
       endDrawer: const CustomDrawer(currentRoute: '/customer/servicehistory'),
       body: SafeArea(
         child: Column(
           children: [
-            // الهيدر العلوي المشترك
             const DashboardHeader(),
 
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  // العنوان العلوي واختيار السيارة بنفس نمط الصفحة السابقة
-                  _buildTopHeader(
-                    "تاريخ الخدمة",
-                    "تتبع أعمال الصيانة والإصلاحات",
-                    primaryColor,
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // TITLE
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          "عرض طلبات الصيانة",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          "متابعة جميع طلبات الصيانة الخاصة بسيارتك",
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 25),
+                    const SizedBox(height: 20),
 
-                  // بطاقات الملخص الإحصائي (أفقية)
-                  _buildStatsSection(isDark),
+                    // LIST
+                    Expanded(
+                      child: loading
+                          ? const Center(child: CircularProgressIndicator())
+                          : currentItems.isEmpty
+                          ? const Center(child: Text("لا يوجد بيانات"))
+                          : ListView.builder(
+                              itemCount: currentItems.length,
+                              itemBuilder: (context, index) {
+                                final row = currentItems[index];
 
-                  const SizedBox(height: 25),
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      "/customer/maintenance_request/request_tracking/${row["requestId"]}",
+                                    );
+                                  },
+                                  child: _buildCard(row, isDark),
+                                );
+                              },
+                            ),
+                    ),
 
-                  // أدوات البحث والفلترة
-                  _buildSearchAndFilter(isDark, primaryColor),
+                    const SizedBox(height: 10),
 
-                  const SizedBox(height: 25),
-
-                  // قسم سجلات الصيانة
-                  _buildSectionTitle("السجلات الأخيرة", primaryColor),
-                  const SizedBox(height: 15),
-
-                  // قائمة السجلات المصممة كبطاقات احترافية
-                  _buildServiceCard(
-                    title: "تغيير زيت المحرك",
-                    date: "Oct 26, 2:00 PM",
-                    cost: "250 EGP",
-                    mechanic: "Alice Martin",
-                    icon: Icons.oil_barrel,
-                    color: Colors.blue,
-                    isDark: isDark,
-                  ),
-                  _buildServiceCard(
-                    title: "استبدال وسادات الفرامل",
-                    date: "Oct 15, 10:30 AM",
-                    cost: "850 EGP",
-                    mechanic: "Samer John",
-                    icon: Icons.settings_input_component,
-                    color: Colors.red,
-                    isDark: isDark,
-                  ),
-                  _buildServiceCard(
-                    title: "فحص الإطارات المجدول",
-                    date: "Sep 20, 4:00 PM",
-                    cost: "100 EGP",
-                    mechanic: "Alice Martin",
-                    icon: Icons.tire_repair,
-                    color: Colors.orange,
-                    isDark: isDark,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // زر تصدير البيانات (Export) بنمط جذاب
-                  _buildExportPromo(primaryColor),
-                ],
+                    // PAGINATION
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              currentPage = (currentPage - 1).clamp(
+                                1,
+                                totalPages,
+                              );
+                            });
+                          },
+                          child: const Text("السابق"),
+                        ),
+                        const SizedBox(width: 10),
+                        Text("$currentPage / $totalPages"),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              currentPage = (currentPage + 1).clamp(
+                                1,
+                                totalPages,
+                              );
+                            });
+                          },
+                          child: const Text("التالي"),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -93,315 +210,114 @@ class _ServiceHistoryPageState extends State<ServiceHistoryPage> {
     );
   }
 
-  // --- UI Components (نفس ستايل الكود الذي أرسلته) ---
-
-  Widget _buildTopHeader(String title, String subtitle, Color primaryColor) {
+  Widget _rowItem(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              subtitle,
-              style: const TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ],
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: primaryColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
-              SizedBox(width: 4),
-              Text(
-                "2022 Toyota RAV4",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.left,
+            style: const TextStyle(fontSize: 12),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatsSection(bool isDark) {
-    return SizedBox(
-      height: 110,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        reverse: true, // لدعم الـ RTL
-        children: [
-          _statCard(
-            "الزيارة القادمة",
-            "غداً",
-            "تغيير زيت",
-            Colors.orange,
-            isDark,
-          ),
-          _statCard(
-            "الخدمة الأخيرة",
-            "25 أكتوبر",
-            "استبدال وسادة الفرامل",
-            Colors.blue,
-            isDark,
-          ),
-          _statCard(
-            "إجمالي الإنفاق",
-            "1,245 EGP",
-            "↑ 12% مقارنة بالعام الماضي",
-            Colors.green,
-            isDark,
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildCard(dynamic row, bool isDark) {
+    final status = row["status"];
+    final color = statusColorMap[status] ?? Colors.grey;
 
-  Widget _statCard(
-    String title,
-    String value,
-    String sub,
-    Color color,
-    bool isDark,
-  ) {
     return Container(
-      width: 150,
-      margin: const EdgeInsets.only(left: 12),
-      padding: const EdgeInsets.all(15),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF137FEC).withOpacity(0.08)
-            : Colors.white,
+        color: isDark ? const Color(0xFF1A233A) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-          const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-          ),
-          Text(
-            sub,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+          // 🔴 المشكلة
+          _rowItem("المشكلة", row["issueDescription"] ?? ""),
 
-  Widget _buildSearchAndFilter(bool isDark, Color primaryColor) {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            textAlign: TextAlign.right,
-            decoration: InputDecoration(
-              hintText: "بحث في السجلات...",
-              hintStyle: const TextStyle(fontSize: 13),
-              prefixIcon: const Icon(Icons.search, size: 20),
-              filled: true,
-              fillColor: isDark
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.grey[100],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: EdgeInsets.zero,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: primaryColor,
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: const Icon(Icons.filter_list, color: Colors.white),
-        ),
-      ],
-    );
-  }
+          const SizedBox(height: 6),
 
-  Widget _buildServiceCard({
-    required String title,
-    required String date,
-    required String cost,
-    required String mechanic,
-    required IconData icon,
-    required Color color,
-    required bool isDark,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A233A) : Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.grey.withOpacity(0.05)),
-        boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                  Text(
-                    date,
-                    style: const TextStyle(color: Colors.grey, fontSize: 11),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                cost,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                ),
-              ),
-            ],
+          // 📅 التاريخ
+          _rowItem(
+            "التاريخ",
+            row["createdAt"] != null
+                ? DateTime.parse(
+                    row["createdAt"],
+                  ).toLocal().toString().split(" ")[0]
+                : "-",
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(height: 1),
+
+          const SizedBox(height: 6),
+
+          // 🚗 السيارة
+          _rowItem(
+            "السيارة",
+            "${row["car"]?["brand"] ?? ""} ${row["car"]?["model"] ?? ""}",
           ),
+
+          const SizedBox(height: 6),
+
+          // 🔧 الخدمة
+          _rowItem("الخدمة", serviceTypeMap[row["serviceType"]] ?? "—"),
+
+          const SizedBox(height: 10),
+
+          // 🟢 الحالة + 👨‍🔧 الميكانيكي
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // الميكانيكي
               Row(
                 children: [
-                  const Icon(Icons.person, size: 14, color: Colors.grey),
-                  const SizedBox(width: 4),
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundImage:
+                        row["assignedMechanic"]?["profilePhotoUrl"] != null
+                        ? NetworkImage(
+                            row["assignedMechanic"]["profilePhotoUrl"],
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 6),
                   Text(
-                    mechanic,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    "${row["assignedMechanic"]?["firstName"] ?? ""} ${row["assignedMechanic"]?["lastName"] ?? ""}",
+                    style: const TextStyle(fontSize: 11),
                   ),
                 ],
               ),
-              const Text(
-                "عرض التفاصيل",
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+
+              // الحالة
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  statusMap[status] ?? "—",
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildExportPromo(Color primaryColor) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: primaryColor.withOpacity(0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.file_download_outlined, color: primaryColor, size: 30),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "تحميل السجل بالكامل",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const Text(
-                  "احصل على نسخة PDF من تقرير صيانة سيارتك",
-                  style: TextStyle(color: Colors.grey, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              "تحميل",
-              style: TextStyle(
-                color: primaryColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          width: 4,
-          height: 20,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      ],
     );
   }
 }
