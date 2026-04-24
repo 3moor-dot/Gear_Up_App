@@ -79,7 +79,6 @@ class _RequestTrackingScreenState extends State<RequestTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     // تحديد لون الثيم الأساسي
-    final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
       appBar: AppBar(

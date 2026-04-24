@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddBookingModal extends StatefulWidget {
   const AddBookingModal({super.key});
@@ -8,27 +11,251 @@ class AddBookingModal extends StatefulWidget {
 }
 
 class _AddBookingModalState extends State<AddBookingModal> {
-  // متغيرات لتخزين القيم المختارة
-  String? selectedMechanic;
-  String? selectedService;
-  String? selectedCar;
-  DateTime? selectedDate;
-  TimeOfDay? selectedTime;
+  final String baseUrl = "https://gearupapp.runasp.net/api";
+
+  // ✅ نفس React (IDs مش names)
+  String mechanicId = "";
+  String carId = "";
+  String mechanicServiceId = "";
+
+  String date = "";
+  String slotStart = "";
+  String slotEnd = "";
+
+  bool loading = false;
+
+  List<Map<String, String>> mechanics = [];
+  List<Map<String, String>> cars = [];
+  List<Map<String, dynamic>> services = [];
+
+  bool loadingMechanics = false;
+  bool loadingCars = false;
+  bool loadingServices = false;
 
   final primaryColor = const Color(0xFF137FEC);
+
+  @override
+  void initState() {
+    super.initState();
+    fetchMechanics();
+    fetchCars();
+  }
+
+  void safeSetState(VoidCallback fn) {
+    if (!mounted) return;
+    setState(fn);
+  }
+
+  // ================= TOKEN =================
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("userToken");
+  }
+
+  Map<String, String> getHeaders(String? token) {
+    if (token == null) return {"Accept": "*/*"};
+
+    return {
+      "Authorization": "Bearer $token",
+      "Accept": "*/*",
+      "Content-Type": "application/json",
+    };
+  }
+
+  // ================= FETCH =================
+
+  Future<void> fetchMechanics() async {
+    try {
+      setState(() => loadingMechanics = true);
+
+      final res = await http.get(
+        Uri.parse("$baseUrl/mechanics"),
+        headers: {"Accept": "*/*"},
+      );
+
+      final data = jsonDecode(res.body);
+      final list = data["data"] ?? [];
+
+      final mapped = list
+          .where((e) => e["mechanicProfileId"] != null)
+          .map<Map<String, String>>(
+            (e) => {
+              "id": e["id"].toString(),
+              "name": "${e["firstName"]} ${e["lastName"]}",
+            },
+          )
+          .toList();
+
+      setState(() => mechanics = mapped);
+    } catch (e) {
+      mechanics = [];
+    } finally {
+      safeSetState(() => loadingMechanics = false);
+    }
+  }
+
+  Future<void> fetchCars() async {
+    try {
+      final token = await getToken();
+
+      if (token == null) {
+        setState(() => cars = []);
+        return;
+      }
+
+      setState(() => loadingCars = true);
+
+      final res = await http.get(
+        Uri.parse("$baseUrl/customers/cars"),
+        headers: getHeaders(token),
+      );
+
+      final data = jsonDecode(res.body);
+      final list = data["cars"] ?? [];
+
+      final mapped = list.map<Map<String, String>>((e) {
+        return {
+          "id": e["id"].toString(),
+          "name": "${e["brand"]} ${e["model"]} - ${e["year"]}",
+        };
+      }).toList();
+
+      setState(() => cars = mapped);
+    } catch (e) {
+      cars = [];
+    } finally {
+      safeSetState(() => loadingCars = false);
+    }
+  }
+
+  Future<void> fetchServices(String id) async {
+    try {
+      if (id.isEmpty) {
+        setState(() {
+          services = [];
+          mechanicServiceId = "";
+        });
+        return;
+      }
+
+      setState(() {
+        loadingServices = true;
+        services = [];
+        mechanicServiceId = "";
+      });
+
+      final token = await getToken();
+
+      final res = await http.get(
+        Uri.parse("$baseUrl/specializations/mechanic/$id/priced-services"),
+        headers: getHeaders(token),
+      );
+
+      final data = jsonDecode(res.body);
+
+      final list = data is List ? data : data["data"] ?? [];
+
+      final mapped = list.map<Map<String, dynamic>>((e) {
+        return {
+          "id": e["id"].toString(),
+          "name": e["subSpecializationName"],
+          "price": e["price"],
+        };
+      }).toList();
+
+      setState(() => services = mapped);
+    } catch (e) {
+      services = [];
+    } finally {
+      safeSetState(() => loadingServices = false);
+    }
+  }
+
+  Future<void> submitBooking() async {
+    if (mechanicId.isEmpty ||
+        carId.isEmpty ||
+        mechanicServiceId.isEmpty ||
+        date.isEmpty ||
+        slotStart.isEmpty ||
+        slotEnd.isEmpty) {
+      showMsg("من فضلك املي كل البيانات");
+      return;
+    }
+
+    String toApiTimeFormat(String time) {
+      if (time.isEmpty) return "";
+      return time.length == 5 ? "$time:00" : time;
+    }
+
+    final start = toApiTimeFormat(slotStart);
+    final end = toApiTimeFormat(slotEnd);
+
+    if (end.compareTo(start) <= 0) {
+      showMsg("وقت النهاية لازم يكون بعد البداية");
+      return;
+    }
+
+    try {
+      final token = await getToken();
+
+      if (token == null) {
+        showMsg("انتهت الجلسة");
+        return;
+      }
+
+      setState(() => loading = true);
+
+      final payload = {
+        "mechanicId": mechanicId,
+        "carId": carId,
+        "mechanicServiceId": mechanicServiceId,
+        "date": date,
+        "slotStart": start,
+        "slotEnd": end,
+      };
+
+      final res = await http.post(
+        Uri.parse("$baseUrl/bookings"),
+        headers: getHeaders(token),
+        body: jsonEncode(payload),
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        Navigator.pop(context);
+        showMsg("تم إضافة الحجز بنجاح");
+      } else {
+        final data = jsonDecode(res.body);
+        showMsg(data["message"] ?? "حصل خطأ");
+      }
+    } catch (e) {
+      showMsg("خطأ في الاتصال");
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  void showMsg(String msg) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg, textAlign: TextAlign.center)));
+  }
+
+  // ================= UI =================
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF0B1020) : const Color(0xFFE5F1FD);
-    final inputBg = isDark ? const Color(0xFF137FEC).withOpacity(0.2) : const Color(0xFF93C5FD);
+    final inputBg = isDark
+        ? const Color(0xFF137FEC).withOpacity(0.2)
+        : const Color(0xFF93C5FD);
 
     return Container(
       padding: EdgeInsets.only(
         top: 20,
         left: 20,
         right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20, // للتعامل مع لوحة المفاتيح
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
       decoration: BoxDecoration(
         color: bgColor,
@@ -36,87 +263,100 @@ class _AddBookingModalState extends State<AddBookingModal> {
       ),
       child: SingleChildScrollView(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            // مقبض السحب العلوي (أنيق للموبايل)
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 10),
             Text(
               "إضافة حجز جديد",
               style: TextStyle(
                 fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
               ),
             ),
-            const SizedBox(height: 30),
 
-            // الحقول
-            _buildDropdownField("الميكانيكي", ["علي جمال", "أحمد محمد", "محمود حسن"], inputBg),
-            _buildDropdownField("الخدمة", ["تغيير زيت", "فحص فرامل", "صيانة دورية"], inputBg),
-            _buildDropdownField("اختيار السيارة", ["Toyota RAV4 2022", "Honda Civic 2021"], inputBg),
+            const SizedBox(height: 20),
 
-            // التاريخ
-            _buildInteractiveField(
-              "التاريخ",
-              selectedDate == null ? "اختر التاريخ" : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
-              Icons.calendar_month,
-              inputBg,
-              () async {
-                DateTime? picked = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime(2030),
-                );
-                if (picked != null) setState(() => selectedDate = picked);
+            // 🔹 Mechanics
+            buildDropdown(
+              "الميكانيكي",
+              mechanics,
+              mechanicId,
+              (val) {
+                setState(() {
+                  mechanicId = val;
+                });
+                fetchServices(val);
               },
+              inputBg,
+              loadingMechanics ? "جاري التحميل..." : "اختر الميكانيكي",
             ),
 
-            // التوقيت
-            _buildInteractiveField(
-              "التوقيت",
-              selectedTime == null ? "اختر الوقت" : selectedTime!.format(context),
-              Icons.access_time_filled,
-              inputBg,
-              () async {
-                TimeOfDay? picked = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-                if (picked != null) setState(() => selectedTime = picked);
+            // 🔹 Services
+            buildDropdown(
+              "الخدمة",
+              services
+                  .map(
+                    (e) => {
+                      "id": e["id"].toString(),
+                      "name": "${e["name"]} - ${e["price"]} EGP",
+                    },
+                  )
+                  .toList(),
+              mechanicServiceId,
+              (val) {
+                setState(() {
+                  mechanicServiceId = val;
+                });
               },
+              inputBg,
+              !mechanicId.isNotEmpty
+                  ? "اختار ميكانيكي الأول"
+                  : loadingServices
+                  ? "جاري تحميل الخدمات..."
+                  : "اختر الخدمة",
             ),
 
-            const SizedBox(height: 30),
+            // 🔹 Cars
+            buildDropdown(
+              "السيارة",
+              cars,
+              carId,
+              (val) {
+                setState(() {
+                  carId = val;
+                });
+              },
+              inputBg,
+              loadingCars ? "جاري التحميل..." : "اختر السيارة",
+            ),
 
-            // زر الإرسال
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("تم إرسال طلبك بنجاح!", textAlign: TextAlign.center)),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  elevation: 5,
+            const SizedBox(height: 20), const SizedBox(height: 20),
+
+            // 📅 التاريخ
+            buildDateField(inputBg),
+
+            // ⏰ وقت البداية
+            buildTimeField("وقت البداية", slotStart, (val) {
+              safeSetState(() => slotStart = val);
+            }, inputBg),
+
+            // ⏰ وقت النهاية
+            buildTimeField("وقت النهاية", slotEnd, (val) {
+              safeSetState(() => slotEnd = val);
+            }, inputBg),
+            ElevatedButton(
+              onPressed: loading ? null : submitBooking,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                minimumSize: const Size(double.infinity, 55),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  "إرسال طلب جديد",
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+              ),
+
+              child: Text(
+                loading ? "جاري الإرسال..." : "إرسال الطلب",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
           ],
@@ -125,31 +365,39 @@ class _AddBookingModalState extends State<AddBookingModal> {
     );
   }
 
-  // ويدجت حقول القوائم المنسدلة
-  Widget _buildDropdownField(String label, List<String> options, Color bgColor) {
+  Widget buildDateField(Color bg) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const Text("التاريخ"),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(20)),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
-                dropdownColor: const Color(0xFF137FEC),
-                hint: const Text("اختر من القائمة...", style: TextStyle(color: Colors.white70, fontSize: 13)),
-                items: options.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  );
-                }).toList(),
-                onChanged: (val) {},
+          InkWell(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2100),
+              );
+
+              if (picked != null) {
+                safeSetState(() {
+                  date = picked.toIso8601String().split("T")[0];
+                });
+              }
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                date.isEmpty ? "اختر التاريخ" : date,
+                textAlign: TextAlign.right,
               ),
             ),
           ),
@@ -158,27 +406,85 @@ class _AddBookingModalState extends State<AddBookingModal> {
     );
   }
 
-  // ويدجت الحقول التفاعلية (تاريخ ووقت)
-  Widget _buildInteractiveField(String label, String value, IconData icon, Color bgColor, VoidCallback onTap) {
+  Widget buildTimeField(
+    String label,
+    String value,
+    Function(String) onPick,
+    Color bg,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(label),
           const SizedBox(height: 8),
           InkWell(
-            onTap: onTap,
+            onTap: () async {
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay.now(),
+              );
+
+              if (picked != null) {
+                onPick(
+                  "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}",
+                );
+              }
+            },
             child: Container(
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(20)),
-              child: Row(
-                children: [
-                  Icon(icon, color: Colors.white, size: 20),
-                  const Spacer(),
-                  Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ],
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(20),
               ),
+              child: Text(
+                value.isEmpty ? "اختر الوقت" : value,
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildDropdown(
+    String label,
+    List<Map<String, String>> items,
+    String value,
+    Function(String) onChanged,
+    Color bg,
+    String hint,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(label),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: DropdownButton<String>(
+              value: value.isEmpty ? null : value,
+              isExpanded: true,
+              underline: const SizedBox(),
+              hint: Text(hint),
+              items: items.map((e) {
+                return DropdownMenuItem(
+                  value: e["id"],
+                  child: Text(e["name"]!),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) onChanged(val);
+              },
             ),
           ),
         ],
