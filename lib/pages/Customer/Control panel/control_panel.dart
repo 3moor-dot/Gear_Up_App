@@ -1,47 +1,259 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:gear_up_app/components/Customer/customer_header.dart';
 import 'package:gear_up_app/components/Customer/customer_sidebar.dart';
 
-class CustomerDashboardPage extends StatelessWidget {
+class CustomerDashboardPage extends StatefulWidget {
   const CustomerDashboardPage({super.key});
+
+  @override
+  State<CustomerDashboardPage> createState() => _CustomerDashboardPageState();
+}
+
+class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
+  final primaryColor = const Color(0xFF137FEC);
+
+  String userName = "";
+  bool loading = true;
+
+  List cars = [];
+  int selectedCarIndex = 0;
+
+  List reminders = [];
+  bool remindersLoading = false;
+
+  List mechanics = [];
+  bool mechanicsLoading = false;
+
+  List historyData = [];
+
+  final allowedStatuses = [
+    "Accepted",
+    "OnTheWay",
+    "Arrived",
+    "InProgress",
+    "Completed",
+  ];
+
+  final statusMap = {
+    "Submitted": "تم الإرسال",
+    "Dispatching": "جاري التوزيع",
+    "Accepted": "تم القبول",
+    "OnTheWay": "في الطريق",
+    "Arrived": "وصل",
+    "InProgress": "قيد التنفيذ",
+    "Completed": "مكتمل",
+    "Cancelled": "ملغي",
+  };
+
+  final serviceIconMap = {
+    "Diagnosis": "🔍",
+    "Tires": "🛞",
+    "BodyRepair": "🛠️",
+    "OilChange": "🛢️",
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAll();
+  }
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("userToken");
+  }
+
+  Future<void> fetchAll() async {
+    final token = await getToken();
+    if (token == null) return;
+
+    await Future.wait([
+      fetchProfile(token),
+      fetchCars(token),
+      fetchMechanics(token),
+      fetchHistory(token),
+    ]);
+
+    if (cars.isNotEmpty) {
+      fetchReminders(token);
+    }
+  }
+
+  Future<void> fetchProfile(String token) async {
+    try {
+      final res = await http.get(
+        Uri.parse("https://gearupapp.runasp.net/api/users/profile"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      final data = jsonDecode(res.body);
+      setState(() {
+        userName = data["firstName"] ?? "";
+      });
+    } catch (_) {}
+  }
+
+  Future<void> fetchCars(String token) async {
+    try {
+      final res = await http.get(
+        Uri.parse("https://gearupapp.runasp.net/api/requests/cars"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      final data = jsonDecode(res.body);
+      setState(() {
+        cars = data["cars"] ?? [];
+      });
+    } catch (_) {}
+  }
+
+  Future<void> fetchMechanics(String token) async {
+    setState(() => mechanicsLoading = true);
+
+    try {
+      final res = await http.get(
+        Uri.parse("https://gearupapp.runasp.net/api/mechanics"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      final data = jsonDecode(res.body);
+      List raw = data["data"] ?? [];
+
+      raw = raw.where((m) {
+        if (!m["isActive"] || !m["isAvailable"]) return false;
+        return true;
+      }).toList();
+
+      setState(() => mechanics = raw);
+    } catch (_) {
+      setState(() => mechanics = []);
+    }
+
+    setState(() => mechanicsLoading = false);
+  }
+
+  Future<void> fetchReminders(String token) async {
+    if (cars.isEmpty) return;
+
+    final carId = cars[selectedCarIndex]["id"];
+    setState(() => remindersLoading = true);
+
+    try {
+      final res = await http.get(
+        Uri.parse("https://gearupapp.runasp.net/api/Reminder/car/$carId"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      setState(() {
+        reminders = jsonDecode(res.body);
+      });
+    } catch (_) {
+      setState(() => reminders = []);
+    }
+
+    setState(() => remindersLoading = false);
+  }
+
+  Future<void> fetchHistory(String token) async {
+    setState(() => loading = true);
+
+    try {
+      final res = await http.get(
+        Uri.parse("https://gearupapp.runasp.net/api/requests/history"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      final data = jsonDecode(res.body);
+
+      setState(() {
+        historyData = data["requests"] ?? [];
+      });
+    } catch (_) {
+      setState(() => historyData = []);
+    }
+
+    setState(() => loading = false);
+  }
+
+  List get dashboardHistory {
+    return historyData
+        .where((item) => allowedStatuses.contains(item["status"]))
+        .take(3)
+        .toList();
+  }
+
+  List get upcomingReminders {
+    final list = reminders.where((r) => r["status"] == "Active").toList();
+
+    list.sort(
+      (a, b) => DateTime.parse(
+        a["startDate"],
+      ).compareTo(DateTime.parse(b["startDate"])),
+    );
+
+    return list.take(3).toList();
+  }
+
+  List get topMechanics => mechanics.take(2).toList();
+
+  void switchCar() async {
+    if (cars.length > 1) {
+      setState(() {
+        selectedCarIndex = (selectedCarIndex + 1) % cars.length;
+      });
+
+      final token = await getToken();
+      if (token != null) fetchReminders(token);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF137FEC);
 
     return Scaffold(
-      endDrawer: const CustomDrawer(currentRoute: '/customer/dashboard'),
+      endDrawer: const CustomDrawer(currentRoute: "/customer/dashboard"),
       body: SafeArea(
         child: Column(
           children: [
-            const DashboardHeader(), // الهيدر الذي صممناه سابقاً
+            const DashboardHeader(),
+
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // Welcome Text
-                  _buildSectionHeader("أهلاً بعودتك يا جون!", "إليك نظرة عامة سريعة على حالة سيارتك.", isDark),
-                  
+                  /// HEADER TEXT
+                  Text(
+                    "أهلاً بعودتك${userName.isNotEmpty ? " يا $userName" : ""}!",
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
                   const SizedBox(height: 20),
 
-                  // 1. Car Card
-                  _buildCarCard(primaryColor, isDark),
+                  /// CAR CARD
+                  _carCard(isDark),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // 2. Upcoming Maintenance
-                  _buildUpcomingMaintenance(primaryColor, isDark),
+                  /// REMINDERS
+                  _remindersSection(isDark),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // 3. Find a Mechanic (Horizontal Scroll)
-                  _buildMechanicsSection(primaryColor, isDark),
+                  /// MECHANICS
+                  _mechanicsSection(),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // 4. Service History
-                  _buildServiceHistory(primaryColor, isDark),
+                  /// HISTORY
+                  _historySection(isDark),
                 ],
               ),
             ),
@@ -51,200 +263,283 @@ class CustomerDashboardPage extends StatelessWidget {
     );
   }
 
-  // --- UI Components ---
+  Widget _carCard(bool isDark) {
+    if (cars.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: const Center(child: Text("لا توجد سيارات")),
+      );
+    }
 
-  Widget _buildSectionHeader(String title, String subTitle, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-        Text(subTitle, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-      ],
-    );
-  }
+    final car = cars[selectedCarIndex];
 
-  Widget _buildCarCard(Color primaryColor, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: primaryColor.withOpacity(isDark ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: primaryColor.withOpacity(0.1)),
+        border: Border.all(color: primaryColor.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [
+          /// TEXT
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("2022 Toyota RAV4", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, fontStyle: FontStyle.italic)),
-                const Text("VIN: JTMRDMBA0N0...", style: TextStyle(fontSize: 9, color: Colors.grey)),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                Text(
+                  "${car["year"] ?? ""} ${car["brand"] ?? ""} ${car["model"] ?? ""}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                  child: const Text("تبديل", style: TextStyle(color: Colors.white, fontSize: 12)),
-                )
+                ),
+
+                const SizedBox(height: 5),
+
+                if (car["plateNumber"] != null)
+                  Text(
+                    "رقم اللوحة: ${car["plateNumber"]}",
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  ),
+
+                const SizedBox(height: 15),
+
+                if (cars.length > 1)
+                  ElevatedButton(
+                    onPressed: switchCar,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: Text(
+                      "تبديل (${selectedCarIndex + 1}/${cars.length})",
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
+                    ),
+                  ),
               ],
             ),
           ),
+
+          const SizedBox(width: 10),
+
+          /// IMAGE
           Expanded(
-            child: Image.asset('assets/car_rav4.png', height: 100, fit: BoxFit.fitWidth),
+            flex: 1,
+            child: SizedBox(
+              height: 100,
+              child:
+                  car["carPhotoUrl"] != null &&
+                      car["carPhotoUrl"].toString().isNotEmpty
+                  ? Image.network(
+                      car["carPhotoUrl"],
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.directions_car, size: 50),
+                    )
+                  : const Icon(Icons.directions_car, size: 50),
+            ),
           ),
-          const SizedBox(width: 15),
         ],
       ),
     );
   }
 
-  Widget _buildUpcomingMaintenance(Color primaryColor, bool isDark) {
+  Widget _remindersSection(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _titleWithUnderline("الصيانة القادمة", primaryColor),
-        const SizedBox(height: 15),
-        _maintenanceItem("تغيير الزيت", "15 ديسمبر 2023", Icons.oil_barrel, primaryColor, isDark),
-        const SizedBox(height: 10),
-        _maintenanceItem("دوران الإطارات", "20 ديسمبر 2023", Icons.tire_repair, primaryColor, isDark),
-      ],
-    );
-  }
-
-  Widget _buildMechanicsSection(Color primaryColor, bool isDark) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text("العثور على ميكانيكي", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            TextButton(onPressed: () {}, child: const Text("عرض الكل", style: TextStyle(fontSize: 12))),
-          ],
+        const Text(
+          "الصيانة القادمة",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+
         const SizedBox(height: 10),
-        SizedBox(
-          height: 100,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            reverse: true, // ليدعم الـ RTL
-            children: [
-              _mechanicCircle("خبراء العناية", "4.9", primaryColor, isDark),
-              _mechanicCircle("لحن الدقة", "4.7", primaryColor, isDark),
-              _mechanicCircle("المهندس", "4.8", primaryColor, isDark),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildServiceHistory(Color primaryColor, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("تاريخ الخدمة", style: TextStyle(fontWeight: FontWeight.bold)),
-              const Text("عرض الكل", style: TextStyle(fontSize: 10, color: Colors.blue, decoration: TextDecoration.underline)),
-            ],
-          ),
-          const SizedBox(height: 15),
-          _historyItem("استبدال وسادة الفرامل", "25 أكتوبر - \$250", Icons.settings_backup_restore, isDark),
-          _historyItem("تغيير الفلتر", "10 أكتوبر - \$50", Icons.filter_alt, isDark),
-        ],
-      ),
-    );
-  }
-
-  // --- Small Helper Widgets ---
-
-  Widget _titleWithUnderline(String title, Color color) {
-    return Container(
-      padding: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: color, width: 2))),
-      child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-    );
-  }
-
-  Widget _maintenanceItem(String title, String date, IconData icon, Color primaryColor, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFF93C5FD),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          CircleAvatar(backgroundColor: primaryColor, child: Icon(icon, color: Colors.white, size: 20)),
-          const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              Text(date, style: const TextStyle(color: Colors.white70, fontSize: 10)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _mechanicCircle(String name, String rate, Color primaryColor, bool isDark) {
-    return Container(
-      width: 150,
-      margin: const EdgeInsets.only(left: 10),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: primaryColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(radius: 20, backgroundColor: Colors.white24, child: Icon(Icons.person, color: Colors.white)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-                Text("⭐ $rate", style: const TextStyle(color: Colors.white70, fontSize: 10)),
-              ],
+        if (remindersLoading)
+          const Center(child: CircularProgressIndicator())
+        else if (upcomingReminders.isEmpty)
+          const Text("لا توجد صيانات")
+        else
+          ...upcomingReminders.map(
+            (r) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFF93C5FD),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: primaryColor,
+                    child: const Icon(Icons.build, color: Colors.white),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          r["name"] ?? "تذكير",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          r["startDate"],
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
-  Widget _historyItem(String title, String desc, IconData icon, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Icon(icon, color: Colors.blueGrey, size: 24),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              Text(desc, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-            ],
+  Widget _mechanicsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "الميكانيكيين",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+
+        const SizedBox(height: 10),
+
+        if (mechanicsLoading)
+          const CircularProgressIndicator()
+        else
+          ...topMechanics.map(
+            (m) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: primaryColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.white24,
+                    backgroundImage: m["profilePhotoUrl"] != null
+                        ? NetworkImage(m["profilePhotoUrl"])
+                        : null,
+                    child: m["profilePhotoUrl"] == null
+                        ? const Icon(Icons.person, color: Colors.white)
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${m["firstName"]} ${m["lastName"]}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          m["phoneNumber"] ?? "",
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
+      ],
+    );
+  }
+
+  Widget _historySection(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "تاريخ الخدمة",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+
+        const SizedBox(height: 10),
+
+        if (loading)
+          const CircularProgressIndicator()
+        else if (dashboardHistory.isEmpty)
+          const Text("لا يوجد بيانات")
+        else
+          ...dashboardHistory.map(
+            (h) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.grey[100],
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    serviceIconMap[h["serviceType"]] ?? "🔧",
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          h["issueDescription"],
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          statusMap[h["status"]] ?? "",
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
