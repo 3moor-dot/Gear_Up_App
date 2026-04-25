@@ -245,10 +245,11 @@ class _AddBookingModalState extends State<AddBookingModal> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF0B1020) : const Color(0xFFE5F1FD);
+    final bgColor = isDark ? const Color(0xFF0B1020) : Colors.white;
+
     final inputBg = isDark
-        ? const Color(0xFF137FEC).withOpacity(0.2)
-        : const Color(0xFF93C5FD);
+        ? const Color(0xFF137FEC).withOpacity(0.15)
+        : Colors.white;
 
     return Container(
       padding: EdgeInsets.only(
@@ -356,7 +357,11 @@ class _AddBookingModalState extends State<AddBookingModal> {
 
               child: Text(
                 loading ? "جاري الإرسال..." : "إرسال الطلب",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
