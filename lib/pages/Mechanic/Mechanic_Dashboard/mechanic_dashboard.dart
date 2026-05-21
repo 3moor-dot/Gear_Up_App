@@ -141,6 +141,10 @@ class _MachineDashboardState extends State<MachineDashboard> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0B1220) : Colors.grey[100],
+      endDrawer: const SizedBox(
+        width: 260,
+        child: MachineDrawer(currentRoute: "/mechanic/dashboard"),
+      ),
       body: SafeArea(
         child: Row(
           children: [
