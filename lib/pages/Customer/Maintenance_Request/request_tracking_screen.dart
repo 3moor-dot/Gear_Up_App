@@ -54,11 +54,15 @@ class _RequestTrackingScreenState extends State<RequestTrackingScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('userToken');
 
+      // 💡 تم تعديل الرابط بإضافة /status في النهاية ليطابق الـ Web
       final response = await http.get(
         Uri.parse(
-          "https://gearupapp.runasp.net/api/requests/${widget.requestId}",
+          "https://gearupapp.runasp.net/api/requests/${widget.requestId}/status",
         ),
-        headers: {'Authorization': 'Bearer $token'},
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
       );
 
       if (response.statusCode == 200) {

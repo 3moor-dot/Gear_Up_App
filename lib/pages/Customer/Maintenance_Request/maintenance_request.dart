@@ -1116,10 +1116,8 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
                     subtitle: Text("⭐ ${mech['averageRating'] ?? '5'}"),
                     trailing: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context); // إغلاق التبويب
-                        _handleSelectMechanic(
-                          mech['mechanicUserId'],
-                        ); // استدعاء دالة الاختيار
+                        // 💡 تعديل: نمرر معرف الميكانيكي والـ context الحالي
+                        _handleSelectMechanic(mech['mechanicUserId'], context);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
@@ -1140,7 +1138,11 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
   }
 
   // دالة اختيار الميكانيكي والتحويل لصفحة التتبع
-  Future<void> _handleSelectMechanic(String mechanicUserId) async {
+  // 💡 تعديل: إضافة الـ context لتنظيف مسار شاشات الـ Navigator
+  Future<void> _handleSelectMechanic(
+    String mechanicUserId,
+    BuildContext sheetContext,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('userToken');
@@ -1157,7 +1159,13 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         if (mounted) {
-          // ✅ الانتقال الصحيح وتمرير الـ ID الفعلي
+          // 1. إغلاق الـ BottomSheet الخاصة بقائمة الميكانيكيين الذين وافقوا
+          Navigator.pop(sheetContext);
+
+          // 2. إغلاق الـ BottomSheet الخلفية الخاصة بـ "جاري البحث عن ميكانيكي قريب" (الـ Pulse)
+          Navigator.pop(context);
+
+          // 3. الانتقال النظيف لصفحة التتبع واستبدال الصفحة الحالية بها
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -1168,6 +1176,9 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
         }
       } else {
         print("Error From Server: ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("حدث خطأ أثناء اختيار الميكانيكي")),
+        );
       }
     } catch (e) {
       print("Exception: $e");

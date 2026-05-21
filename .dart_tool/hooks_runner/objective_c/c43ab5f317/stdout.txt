@@ -1,56 +1,55 @@
 Running `(cd /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/; TMPDIR=/var/folders/xc/1n7rpbs5585g2j6l1bybn0q40000gn/T/ PATH=/Applications/Xcode.app/Contents/SharedFrameworks/SwiftBuild.framework/Versions/A/PlugIns/SWBBuildService.bundle/Contents/PlugIns/SWBUniversalPlatformPlugin.bundle/Contents/Frameworks/SWBUniversalPlatform.framework/Resources:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/libexec:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin HOME=/Users/amr /usr/local/share/flutter/bin/cache/dart-sdk/bin/dart --packages=/Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/package_config.json /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/objective_c/c43ab5f317/hook.dill --config=/Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/objective_c/c43ab5f317/input.json )`.
-INFO: 2026-04-24 15:35:08.070297: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+INFO: 2026-05-21 10:16:10.773792: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
 
-INFO: 2026-04-24 15:35:08.207133: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+INFO: 2026-05-21 10:16:10.993654: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
 
-INFO: 2026-04-24 15:35:08.351430: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_api_dl.c -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/include/dart_api_dl.c.o
+INFO: 2026-05-21 10:16:11.209117: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_api_dl.c -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/include/dart_api_dl.c.o
 
-INFO: 2026-04-24 15:35:08.353033: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.c -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.c.o
+INFO: 2026-05-21 10:16:11.213526: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.c -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.c.o
+INFO: 2026-05-21 10:16:11.215202: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/input_stream_adapter.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/input_stream_adapter.m.o
 
-INFO: 2026-04-24 15:35:08.353552: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/input_stream_adapter.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/input_stream_adapter.m.o
+INFO: 2026-05-21 10:16:11.216406: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/observer.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/observer.m.o
 
-INFO: 2026-04-24 15:35:08.354406: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.m.o
+.m.o
 
-INFO: 2026-04-24 15:35:08.354913: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/observer.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/observer.m.o
+INFO: 2026-05-21 10:16:11.217058: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/ns_number.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/ns_number.m.o
+INFO: 2026-05-21 10:16:11.217614: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/protocol.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/protocol.m.o
+INFO: 2026-05-21 10:16:11.218250: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c_bindings_generated.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c_bindings_generated.m.o
 
-INFO: 2026-04-24 15:35:08.355341: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/ns_number.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/ns_number.m.o
+INFO: 2026-05-21 10:16:12.037551: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.c.o
 
-INFO: 2026-04-24 15:35:08.355744: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/protocol.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/protocol.m.o
+INFO: 2026-05-21 10:16:12.057812: 
+INFO: 2026-05-21 10:16:12.057907: 
+INFO: 2026-05-21 10:16:12.057966: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/include/dart_api_dl.c.o
 
-INFO: 2026-04-24 15:35:08.356231: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 -x objective-c -fobjc-arc -c /Users/amr/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c_bindings_generated.m -fpic -I src -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c_bindings_generated.m.o
+INFO: 2026-05-21 10:16:12.179494: 
+INFO: 2026-05-21 10:16:12.179581: 
+INFO: 2026-05-21 10:16:12.179660: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/observer.m.o
 
-INFO: 2026-04-24 15:35:09.014086: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/include/dart_api_dl.c.o
+INFO: 2026-05-21 10:16:12.184802: 
+INFO: 2026-05-21 10:16:12.184926: 
+INFO: 2026-05-21 10:16:12.184977: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/protocol.m.o
 
-INFO: 2026-04-24 15:35:09.014676: 
-INFO: 2026-04-24 15:35:09.014740: 
-INFO: 2026-04-24 15:35:09.014793: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.c.o
+INFO: 2026-05-21 10:16:12.799016: 
+INFO: 2026-05-21 10:16:12.799122: 
+INFO: 2026-05-21 10:16:12.799186: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/ns_number.m.o
 
-INFO: 2026-04-24 15:35:09.074698: 
-INFO: 2026-04-24 15:35:09.074799: 
-INFO: 2026-04-24 15:35:09.074919: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/protocol.m.o
+INFO: 2026-05-21 10:16:12.816844: 
+INFO: 2026-05-21 10:16:12.816919: 
+INFO: 2026-05-21 10:16:12.816981: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.m.o
 
-INFO: 2026-04-24 15:35:09.076752: 
-INFO: 2026-04-24 15:35:09.076917: 
-INFO: 2026-04-24 15:35:09.076981: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/observer.m.o
+INFO: 2026-05-21 10:16:12.830572: 
+INFO: 2026-05-21 10:16:12.830655: 
+INFO: 2026-05-21 10:16:12.830703: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/input_stream_adapter.m.o
 
-INFO: 2026-04-24 15:35:09.507829: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.m.o
+INFO: 2026-05-21 10:16:12.923524: 
+INFO: 2026-05-21 10:16:12.923599: 
+INFO: 2026-05-21 10:16:12.923644: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c_bindings_generated.m.o
 
-INFO: 2026-04-24 15:35:09.508364: 
-INFO: 2026-04-24 15:35:09.508427: 
-INFO: 2026-04-24 15:35:09.508488: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/ns_number.m.o
+INFO: 2026-05-21 10:16:12.924616: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/include/dart_api_dl.c.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.c.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/input_stream_adapter.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/observer.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/ns_number.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/protocol.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c_bindings_generated.m.o -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/objective_c.dylib
 
-INFO: 2026-04-24 15:35:09.525049: 
-INFO: 2026-04-24 15:35:09.525119: 
-INFO: 2026-04-24 15:35:09.525166: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/input_stream_adapter.m.o
+INFO: 2026-05-21 10:16:13.241052: 
+INFO: 2026-05-21 10:16:13.241309: ld: warning: -undefined dynamic_lookup is deprecated on iOS
 
-INFO: 2026-04-24 15:35:09.591860: 
-INFO: 2026-04-24 15:35:09.591920: 
-INFO: 2026-04-24 15:35:09.591954: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c_bindings_generated.m.o
-
-INFO: 2026-04-24 15:35:09.592638: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk -target arm64-apple-ios -mios-version-min=13 /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/include/dart_api_dl.c.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.c.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/input_stream_adapter.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/observer.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/ns_number.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/protocol.m.o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/obj/src/objective_c_bindings_generated.m.o -o /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/objective_c.dylib
-
-INFO: 2026-04-24 15:35:09.825619: 
-INFO: 2026-04-24 15:35:09.825798: ld: warning: -undefined dynamic_lookup is deprecated on iOS
-
-INFO: 2026-04-24 15:35:09.825834: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/objective_c.dylib
+INFO: 2026-05-21 10:16:13.241361: Generated /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/hooks_runner/shared/objective_c/build/c43ab5f317/objective_c.dylib
 
