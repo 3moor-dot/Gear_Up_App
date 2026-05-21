@@ -94,6 +94,7 @@ class _MachineDrawerState extends State<MachineDrawer> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 _buildMenuItem(context, "لوحة التحكم", Icons.dashboard_rounded, '/mechanic/dashboard', primaryColor, isDark),
+                _buildMenuItem(context, "طلبات الصيانه", Icons.dashboard_rounded, '/mechanic/request-history', primaryColor, isDark),
                 _buildMenuItem(context, "جدول المواعيد", Icons.calendar_today_rounded, '/mechanic/schedule', primaryColor, isDark),
                 _buildMenuItem(context, "الحجوزات", Icons.assignment_rounded, '/mechanic/booking', primaryColor, isDark),
                 _buildMenuItem(context, "المراجعات", Icons.comment_bank_rounded, '/mechanic/reviewing', primaryColor, isDark),
