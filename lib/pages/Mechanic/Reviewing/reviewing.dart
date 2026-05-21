@@ -1,37 +1,35 @@
-import 'package:flutter/material.dart';
-import 'package:gear_up_app/components/Mechanic/mechanic_sidebar.dart';
-import 'package:gear_up_app/components/Mechanic/mechanic_header.dart';
+import 'dart:convert';
 
-class Review {
+import 'package:flutter/material.dart';
+import 'package:gear_up_app/components/Mechanic/mechanic_header.dart';
+import 'package:gear_up_app/components/Mechanic/mechanic_sidebar.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+class ReviewModel {
   final int id;
-  final String name;
-  final String date;
+  final String userName;
   final int rating;
   final String comment;
-  final String avatar;
-  Reply? reply;
+  final String createdAt;
 
-  Review({
+  ReviewModel({
     required this.id,
-    required this.name,
-    required this.date,
+    required this.userName,
     required this.rating,
     required this.comment,
-    required this.avatar,
-    this.reply,
+    required this.createdAt,
   });
-}
 
-class Reply {
-  final String text;
-  final String date;
-  final String author;
-
-  Reply({
-    required this.text,
-    required this.date,
-    required this.author,
-  });
+  factory ReviewModel.fromJson(Map<String, dynamic> json) {
+    return ReviewModel(
+      id: int.tryParse(json['id'].toString()) ?? 0,
+      userName: json['userName'] ?? "مستخدم",
+      rating: int.tryParse(json['rating'].toString()) ?? 0,
+      comment: json['comment'] ?? "",
+      createdAt: json['createdAt'] ?? "",
+    );
+  }
 }
 
 class ReviewsPage extends StatefulWidget {
@@ -42,72 +40,290 @@ class ReviewsPage extends StatefulWidget {
 }
 
 class _ReviewsPageState extends State<ReviewsPage> {
-  int? openReplyId;
-  final TextEditingController _replyController = TextEditingController();
+  final Color primaryColor = const Color(0xFF137FEC);
 
-  // البيانات التجريبية
-  List<Review> reviews = [
-    Review(
-      id: 1,
-      name: "جون دوج",
-      date: "12 مارس 2024",
-      rating: 5,
-      comment: "خدمة ممتازة وسريعة، الشغل احترافي جدًا والسعر مناسب. أكيد هتعامل معاهم تاني.",
-      avatar: "https://i.pravatar.cc/100?img=11",
-    ),
-    Review(
-      id: 2,
-      name: "أحمد علي",
-      date: "10 مارس 2024",
-      rating: 4,
-      comment: "التجربة كانت كويسة جدًا، بس اتأخروا شوية في التسليم.",
-      avatar: "https://i.pravatar.cc/100?img=12",
-    ),
-  ];
+  List<ReviewModel> reviews = [];
 
-  void _handleSendReply(int reviewId) {
-    if (_replyController.text.trim().isEmpty) return;
+  bool loadingReviews = true;
+  bool loadingRating = true;
 
-    setState(() {
-      final index = reviews.indexWhere((r) => r.id == reviewId);
-      reviews[index].reply = Reply(
-        text: _replyController.text,
-        date: "الآن",
-        author: "إدارة الورشة",
-      );
-      _replyController.clear();
-      openReplyId = null;
-    });
+  dynamic averageRating = "--";
+
+  String? token;
+  String? mechanicId;
+
+  @override
+  void initState() {
+    super.initState();
+    initializeData();
   }
+
+  // ================= INIT =================
+
+  Future<void> initializeData() async {
+    await loadToken();
+
+    if (mechanicId == null) {
+      debugPrint("❌ mechanicId = null");
+
+      setState(() {
+        loadingReviews = false;
+        loadingRating = false;
+      });
+
+      return;
+    }
+
+    debugPrint("✅ mechanicId: $mechanicId");
+
+    await Future.wait([fetchAverageRating(), fetchReviews()]);
+  }
+
+  Future<void> loadToken() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    token = prefs.getString("userToken");
+
+    if (token == null) {
+      debugPrint("❌ No token found");
+      return;
+    }
+
+    mechanicId = getMechanicId(token!);
+  }
+
+  // ================= JWT =================
+
+  String? getMechanicId(String token) {
+    try {
+      final parts = token.split('.');
+
+      if (parts.length != 3) return null;
+
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+
+      final data = jsonDecode(payload);
+
+      debugPrint("🔍 JWT Payload: $data");
+
+      return data["sub"]?.toString() ??
+          data["id"]?.toString() ??
+          data["userId"]?.toString() ??
+          data["mechanicId"]?.toString();
+    } catch (e) {
+      debugPrint("❌ Token parse failed: $e");
+      return null;
+    }
+  }
+
+  // ================= FETCH REVIEWS =================
+
+  Future<void> fetchReviews() async {
+    try {
+      setState(() => loadingReviews = true);
+
+      final url =
+          "https://gearupapp.runasp.net/api/mechanics/mechanic/$mechanicId/latest?count=50";
+
+      debugPrint("URL => $url");
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      debugPrint("STATUS CODE => ${response.statusCode}");
+      debugPrint("BODY => ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        List<dynamic> reviewsData = [];
+
+        // لو الـ API راجع Array مباشر
+        if (data is List) {
+          reviewsData = data;
+        }
+        // لو راجع object فيه reviews
+        else if (data is Map<String, dynamic>) {
+          if (data["reviews"] != null) {
+            reviewsData = data["reviews"];
+          } else if (data["data"] != null) {
+            reviewsData = data["data"];
+          } else if (data["items"] != null) {
+            reviewsData = data["items"];
+          }
+        }
+
+        debugPrint("REVIEWS LENGTH => ${reviewsData.length}");
+
+        setState(() {
+          reviews = reviewsData.map((e) => ReviewModel.fromJson(e)).toList();
+        });
+      } else {
+        debugPrint("FAILED TO LOAD REVIEWS");
+
+        setState(() {
+          reviews = [];
+        });
+      }
+    } catch (e) {
+      debugPrint("FETCH REVIEWS ERROR => $e");
+
+      setState(() {
+        reviews = [];
+      });
+    } finally {
+      setState(() {
+        loadingReviews = false;
+      });
+    }
+  }
+
+  // ================= FETCH AVG RATING =================
+
+  Future<void> fetchAverageRating() async {
+    try {
+      setState(() => loadingRating = true);
+
+      final response = await http.get(
+        Uri.parse(
+          "https://gearupapp.runasp.net/api/mechanics/mechanic/$mechanicId/average-rating",
+        ),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      debugPrint("RATING STATUS: ${response.statusCode}");
+      debugPrint("RATING BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        dynamic ratingValue = "0";
+
+        if (data is num) {
+          ratingValue = data.toString();
+        } else if (data is Map<String, dynamic>) {
+          ratingValue =
+              data["avgRating"] ??
+              data["averageRating"] ??
+              data["rating"] ??
+              "0";
+        }
+
+        setState(() {
+          averageRating = ratingValue;
+        });
+      } else {
+        setState(() {
+          averageRating = "0";
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ FETCH RATING ERROR: $e");
+
+      setState(() {
+        averageRating = "0";
+      });
+    } finally {
+      setState(() => loadingRating = false);
+    }
+  }
+
+  // ================= STAR PERCENTAGES =================
+
+  List<int> getStarPercentages() {
+    final total = reviews.length;
+
+    if (total == 0) {
+      return [0, 0, 0, 0, 0];
+    }
+
+    final counts = [5, 4, 3, 2, 1].map((star) {
+      return reviews.where((r) => r.rating == star).length;
+    }).toList();
+
+    return counts.map((count) {
+      return ((count / total) * 100).round();
+    }).toList();
+  }
+
+  // ================= UI =================
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF137FEC);
+
+    final starPercents = getStarPercentages();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0B1220) : const Color(0xFFF9FAFB),
+      backgroundColor: isDark
+          ? const Color(0xFF0B1220)
+          : const Color(0xFFF9FAFB),
       endDrawer: const MachineDrawer(currentRoute: '/mechanic/reviewing'),
       body: SafeArea(
         child: Directionality(
           textDirection: TextDirection.rtl,
-          child: Column(
+          child: Row(
             children: [
-              const MachineHeader(),
+              if (MediaQuery.of(context).size.width > 1024)
+                const SizedBox(
+                  width: 280,
+                  child: MachineDrawer(currentRoute: '/mechanic/reviewing'),
+                ),
+
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
+                child: Column(
                   children: [
-                    _buildHeader(isDark),
-                    const SizedBox(height: 20),
-                    _buildRatingSummary(isDark, primaryColor),
-                    const SizedBox(height: 24),
-                    Text(
-                      "جميع المراجعات (${reviews.length})",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    const MachineHeader(),
+
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          _buildHeader(isDark),
+
+                          const SizedBox(height: 20),
+
+                          _buildRatingSummary(isDark, starPercents),
+
+                          const SizedBox(height: 24),
+
+                          Text(
+                            loadingReviews
+                                ? "جميع المراجعات"
+                                : "جميع المراجعات (${reviews.length})",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          if (loadingReviews)
+                            const Padding(
+                              padding: EdgeInsets.all(40),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          else if (reviews.isEmpty)
+                            _buildEmptyState(isDark)
+                          else
+                            ...reviews.map(
+                              (review) => _buildReviewCard(review, isDark),
+                            ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    ...reviews.map((review) => _buildReviewCard(review, isDark, primaryColor)),
                   ],
                 ),
               ),
@@ -118,27 +334,42 @@ class _ReviewsPageState extends State<ReviewsPage> {
     );
   }
 
-  // --- الهيدر العلوي ---
+  // ================= HEADER =================
+
   Widget _buildHeader(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0D1629) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        border: Border.all(color: isDark ? Colors.white10 : Colors.grey[200]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("التقييمات والمراجعات", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text("عرض تقييمات العملاء والرد عليها", style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+          Text(
+            "التقييمات والمراجعات",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "عرض تقييمات العملاء وتحليل الأداء",
+            style: TextStyle(color: Colors.grey[500], fontSize: 13),
+          ),
         ],
       ),
     );
   }
 
-  // --- ملخص التقييمات ---
-  Widget _buildRatingSummary(bool isDark, Color primaryColor) {
+  // ================= RATING SUMMARY =================
+
+  Widget _buildRatingSummary(bool isDark, List<int> starPercents) {
+    final parsedRating = double.tryParse(averageRating.toString()) ?? 0;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -148,51 +379,95 @@ class _ReviewsPageState extends State<ReviewsPage> {
       ),
       child: Column(
         children: [
-          const Text("4.8", style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold)),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (i) => Icon(Icons.star, color: Colors.yellow[700], size: 20)),
-          ),
-          const SizedBox(height: 8),
-          Text("بناءً على ${reviews.length} مراجعة", style: const TextStyle(color: Colors.grey)),
-          const Divider(height: 40),
-          _buildRatingBar(5, 0.82, isDark, primaryColor),
-          _buildRatingBar(4, 0.50, isDark, primaryColor),
-          _buildRatingBar(3, 0.20, isDark, primaryColor),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRatingBar(int star, double percent, bool isDark, Color primaryColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Text("$star", style: const TextStyle(fontSize: 12)),
-          const SizedBox(width: 4),
-          const Icon(Icons.star, size: 12, color: Colors.orange),
-          const SizedBox(width: 8),
-          Expanded(
-            child: LinearProgressIndicator(
-              value: percent,
-              backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
-              color: primaryColor,
-              minHeight: 6,
-              borderRadius: BorderRadius.circular(10),
+          Text(
+            loadingRating ? "..." : averageRating.toString(),
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black87,
             ),
           ),
-          const SizedBox(width: 8),
-          Text("${(percent * 100).toInt()}%", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+
+          const SizedBox(height: 10),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (index) {
+              return Icon(
+                Icons.star,
+                size: 20,
+                color: index < parsedRating.round()
+                    ? Colors.amber
+                    : Colors.grey[400],
+              );
+            }),
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            "بناءً على ${reviews.length} مراجعة",
+            style: const TextStyle(color: Colors.grey),
+          ),
+
+          const Divider(height: 40),
+
+          _buildRatingBar(5, starPercents[0], isDark),
+
+          _buildRatingBar(4, starPercents[1], isDark),
+
+          _buildRatingBar(3, starPercents[2], isDark),
+
+          _buildRatingBar(2, starPercents[3], isDark),
+
+          _buildRatingBar(1, starPercents[4], isDark),
         ],
       ),
     );
   }
 
-  // --- كارت المراجعة الواحدة ---
-  Widget _buildReviewCard(Review review, bool isDark, Color primaryColor) {
-    bool isReplyOpen = openReplyId == review.id;
+  Widget _buildRatingBar(int star, int percent, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Text(
+            "$star",
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+          ),
 
+          const SizedBox(width: 4),
+
+          const Icon(Icons.star, color: Colors.orange, size: 14),
+
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: LinearProgressIndicator(
+                value: percent / 100,
+                minHeight: 8,
+                backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                color: primaryColor,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          Text(
+            "$percent%",
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ================= REVIEW CARD =================
+
+  Widget _buildReviewCard(ReviewModel review, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -206,88 +481,100 @@ class _ReviewsPageState extends State<ReviewsPage> {
         children: [
           Row(
             children: [
-              CircleAvatar(backgroundImage: NetworkImage(review.avatar), radius: 20),
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: primaryColor,
+                child: Text(
+                  review.userName.isNotEmpty
+                      ? review.userName[0].toUpperCase()
+                      : "U",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(review.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(review.date, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                    Text(
+                      review.userName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+
+                    const SizedBox(height: 3),
+
+                    Text(
+                      formatDate(review.createdAt),
+                      style: const TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
                   ],
                 ),
               ),
-              Row(children: List.generate(5, (i) => Icon(Icons.star, color: i < review.rating ? Colors.yellow[700] : Colors.grey[300], size: 14))),
+
+              Row(
+                children: List.generate(5, (index) {
+                  return Icon(
+                    Icons.star,
+                    size: 15,
+                    color: index < review.rating
+                        ? Colors.amber
+                        : Colors.grey[400],
+                  );
+                }),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(review.comment, style: const TextStyle(fontSize: 14, height: 1.5)),
-          
-          if (review.reply != null) _buildReplyBox(review.reply!, isDark, primaryColor),
-          
-          if (review.reply == null) 
-            TextButton(
-              onPressed: () => setState(() => openReplyId = isReplyOpen ? null : review.id),
-              child: Text(isReplyOpen ? "إلغاء" : "رد على المراجعة", style: TextStyle(color: primaryColor, fontSize: 13)),
+
+          const SizedBox(height: 14),
+
+          Text(
+            review.comment,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.6,
+              color: isDark ? Colors.grey[300] : Colors.grey[800],
             ),
-
-          if (isReplyOpen) _buildReplyInput(review.id, isDark, primaryColor),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildReplyBox(Reply reply, bool isDark, Color primaryColor) {
+  // ================= EMPTY =================
+
+  Widget _buildEmptyState(bool isDark) {
     return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
-        color: isDark ? Colors.blue.withOpacity(0.05) : Colors.blue.withOpacity(0.03),
-        border: Border(right: BorderSide(color: primaryColor, width: 4)),
-        borderRadius: BorderRadius.circular(8),
+        color: isDark ? const Color(0xFF0D1629) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(backgroundColor: primaryColor, radius: 12, child: const Text("M", style: TextStyle(color: Colors.white, fontSize: 10))),
-              const SizedBox(width: 8),
-              Text(reply.author, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              const Spacer(),
-              Text(reply.date, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(reply.text, style: TextStyle(fontSize: 13, color: isDark ? Colors.grey[300] : Colors.grey[800])),
-        ],
+      child: const Center(
+        child: Text(
+          "لا توجد مراجعات حالياً",
+          style: TextStyle(color: Colors.grey),
+        ),
       ),
     );
   }
 
-  Widget _buildReplyInput(int reviewId, bool isDark, Color primaryColor) {
-    return Column(
-      children: [
-        TextField(
-          controller: _replyController,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: "اكتب ردك هنا...",
-            filled: true,
-            fillColor: isDark ? const Color(0xFF131c2f) : Colors.grey[100],
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => _handleSendReply(reviewId),
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white),
-            child: const Text("إرسال الرد"),
-          ),
-        )
-      ],
-    );
+  // ================= DATE FORMAT =================
+
+  String formatDate(String date) {
+    try {
+      final parsed = DateTime.parse(date);
+
+      return "${parsed.day}/${parsed.month}/${parsed.year}";
+    } catch (_) {
+      return date;
+    }
   }
 }
