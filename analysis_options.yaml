@@ -18,6 +18,7 @@ analyzer:
     unnecessary_to_list_in_spreads: ignore
     avoid_print: ignore
     strict_top_level_inference: ignore
+    unused_element: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
