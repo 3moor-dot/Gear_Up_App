@@ -19,6 +19,7 @@ class ChatbotPage extends StatefulWidget {
 }
 
 class _ChatbotPageState extends State<ChatbotPage> {
+  static const String chatStorageKey = "gearup_chat_messages";
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> _messages = [];
@@ -44,35 +45,93 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   Future<void> _loadInitialData() async {
-    _startNewChat();
+    await _loadSavedChat();
+
+    if (_messages.isEmpty) {
+      _startNewChat();
+    }
+
     await _fetchUserCars();
   }
 
-  void _startNewChat() {
+  Future<void> _startNewChat() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove(chatStorageKey);
+
     setState(() {
       _messages.clear();
       _showInitialSuggestions = true;
-      _addMessage(
-        "مرحبًا 👋 أنا مساعد GearUp الذكي. اختر سيارتك وابدأ الدردشة!",
-        "bot",
-      );
     });
+
+    _addMessage(
+      "مرحبًا 👋 أنا مساعد GearUp الذكي. اختر سيارتك وابدأ الدردشة!",
+      "bot",
+    );
+  }
+
+  Future<void> _loadSavedChat() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final saved = prefs.getString(chatStorageKey);
+
+    if (saved != null) {
+      final data = jsonDecode(saved);
+
+      setState(() {
+        _messages.clear();
+        _messages.addAll(List<Map<String, dynamic>>.from(data));
+        _showInitialSuggestions = _messages.length <= 1;
+      });
+    }
+  }
+
+  Future<void> _sendFeedback({
+    required String userMessage,
+    required String botMessage,
+    required int feedback,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final token = prefs.getString("userToken");
+
+    await http.post(
+      Uri.parse("https://gearupapp.runasp.net/api/Chatbot/feedback"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "userMessageContent": userMessage,
+        "botMessageContent": botMessage,
+        "feedback": feedback,
+      }),
+    );
   }
 
   Future<void> _fetchUserCars() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("userToken") ?? "";
+
     try {
       final response = await http.get(
         Uri.parse("https://gearupapp.runasp.net/api/customers/cars"),
         headers: {"Authorization": "Bearer $token"},
       );
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
         setState(() {
-          _userCars = jsonDecode(response.body);
-          if (_userCars.isNotEmpty) _selectedCar = _userCars[0];
+          _userCars = data["cars"] ?? [];
+
+          if (_userCars.isNotEmpty) {
+            _selectedCar = _userCars.first;
+          }
         });
+
+        print("Cars: $_userCars");
       }
+      print(response.body);
     } catch (e) {
       debugPrint("Error fetching cars: $e");
     }
@@ -118,15 +177,29 @@ class _ChatbotPageState extends State<ChatbotPage> {
       var response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        // منطق الـ Deep Parse لمطابقة الويب
-        final parsed = _deepParse(data['reply'] ?? data);
+        final rawData = jsonDecode(response.body);
+
+        dynamic replyData;
+
+        if (rawData is Map &&
+            rawData.containsKey("success") &&
+            rawData.containsKey("reply")) {
+          replyData = rawData["reply"];
+        } else {
+          replyData = rawData;
+        }
+
+        final parsed = _deepParse(replyData);
 
         String botText = "";
         if (parsed is Map) {
           botText = parsed['ai_answer'] ?? parsed['reply'] ?? "";
         } else {
           botText = parsed.toString();
+        }
+
+        if (parsed is Map && parsed['requires_mechanic'] == true) {
+          await _saveBookingData(parsed);
         }
 
         _addMessage(botText, "bot", extraData: parsed);
@@ -151,6 +224,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   void _addMessage(String text, String role, {dynamic extraData}) {
+    Future<void> saveMessages() async {
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString(chatStorageKey, jsonEncode(_messages));
+    }
+
     setState(() {
       _messages.add({
         "text": text,
@@ -159,7 +238,28 @@ class _ChatbotPageState extends State<ChatbotPage> {
         "extra": extraData,
       });
     });
+
+    saveMessages();
     _scrollToBottom();
+  }
+
+  Future<void> _saveBookingData(dynamic extra) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (extra['car_id'] != null) {
+        await prefs.setString('booking_car_id', extra['car_id'].toString());
+      }
+
+      if (extra['recommended_mechanics'] != null) {
+        await prefs.setString(
+          'recommended_mechanics',
+          jsonEncode(extra['recommended_mechanics']),
+        );
+      }
+    } catch (e) {
+      debugPrint("Save booking data error: $e");
+    }
   }
 
   void _scrollToBottom() {
@@ -218,7 +318,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           IconButton(
-            onPressed: _startNewChat,
+            onPressed: () async {
+              await _startNewChat();
+            },
             icon: const Icon(Icons.refresh, color: Colors.blue),
           ),
         ],
@@ -255,7 +357,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       : CrossAxisAlignment.start,
                   children: [
                     // عرض الصورة إذا كانت موجودة في رسالة المستخدم
-                    if (isUser && extra != null && extra['image'] != null)
+                    if (isUser &&
+                        extra != null &&
+                        extra['image'] != null &&
+                        File(extra['image']).existsSync())
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: ClipRRect(
@@ -306,9 +411,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
                           primaryColor,
                         ),
 
-                      if (extra['requires_mechanic'] == true)
+                      if (extra['requires_mechanic'] == true &&
+                          extra['is_emergency'] == true)
                         _buildSOSButton(isDark),
-
+                      if (extra['requires_mechanic'] == true &&
+                          extra['is_emergency'] == false)
+                        _buildBookingButton(),
                       if (extra['followUpQuestions'] != null)
                         _buildFollowUpQuestions(extra['followUpQuestions']),
 
@@ -430,9 +538,29 @@ class _ChatbotPageState extends State<ChatbotPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              _feedbackBtn("👍 مفيدة", Colors.green),
+              _feedbackBtn("👍 مفيدة", Colors.green, () {
+                _sendFeedback(
+                  userMessage: _messages.lastWhere(
+                    (m) => m['role'] == 'user',
+                  )['text'],
+                  botMessage: _messages.lastWhere(
+                    (m) => m['role'] == 'bot',
+                  )['text'],
+                  feedback: 1,
+                );
+              }),
               const SizedBox(width: 8),
-              _feedbackBtn("👎 غير مفيدة", Colors.red),
+              _feedbackBtn("👎 غير مفيدة", Colors.red, () {
+                _sendFeedback(
+                  userMessage: _messages.lastWhere(
+                    (m) => m['role'] == 'user',
+                  )['text'],
+                  botMessage: _messages.lastWhere(
+                    (m) => m['role'] == 'bot',
+                  )['text'],
+                  feedback: 0,
+                );
+              }),
             ],
           ),
         ],
@@ -440,15 +568,18 @@ class _ChatbotPageState extends State<ChatbotPage> {
     );
   }
 
-  Widget _feedbackBtn(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+  Widget _feedbackBtn(String text, Color color, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Text(text, style: TextStyle(fontSize: 11, color: color)),
       ),
-      child: Text(text, style: TextStyle(fontSize: 11, color: color)),
     );
   }
 
@@ -480,6 +611,19 @@ class _ChatbotPageState extends State<ChatbotPage> {
     );
   }
 
+  Widget _buildBookingButton() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 12),
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/customer/bookings');
+        },
+        child: const Text("🛠️ احجز صيانة"),
+      ),
+    );
+  }
+
   Widget _buildBotAvatar(Color primaryColor) {
     return Padding(
       padding: const EdgeInsets.only(right: 8, top: 4),
@@ -496,10 +640,15 @@ class _ChatbotPageState extends State<ChatbotPage> {
       padding: const EdgeInsets.only(left: 40, top: 4),
       child: Row(
         children: [
-          _bubbleIcon(
-            Icons.copy_rounded,
-            () => Clipboard.setData(ClipboardData(text: text)),
-          ),
+          _bubbleIcon(Icons.copy_rounded, () async {
+            await Clipboard.setData(ClipboardData(text: text));
+
+            if (mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text("تم نسخ الرسالة")));
+            }
+          }),
           _bubbleIcon(Icons.thumb_up_outlined, () {}),
           _bubbleIcon(Icons.thumb_down_outlined, () {}),
         ],
@@ -564,31 +713,33 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   .toList(),
             ),
           ),
-
-        // اختيار السيارة
-        if (_userCars.isNotEmpty)
+        if (_selectedImage != null)
           Container(
-            height: 45,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _userCars.map((car) {
-                bool selected = _selectedCar?['id'] == car['id'];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(
-                      "${car['make']} ${car['model']}",
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    selected: selected,
-                    onSelected: (val) {
-                      if (val) setState(() => _selectedCar = car);
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    _selectedImage!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: -5,
+                  left: -5,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        _selectedImage = null;
+                      });
                     },
                   ),
-                );
-              }).toList(),
+                ),
+              ],
             ),
           ),
         _buildInputArea(isDark, primaryColor),
@@ -612,8 +763,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
                 ),
               ),
+
               child: Row(
                 children: [
+                  if (_userCars.isNotEmpty)
+
                   IconButton(
                     icon: Icon(
                       _selectedImage != null
@@ -630,6 +784,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       }
                     },
                   ),
+
                   Expanded(
                     child: TextField(
                       controller: _controller,
@@ -642,6 +797,64 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: PopupMenuButton<Map<String, dynamic>>(
+                        onSelected: (car) {
+                          setState(() {
+                            _selectedCar = car;
+                          });
+                        },
+                        itemBuilder: (context) => _userCars.map((car) {
+                          return PopupMenuItem<Map<String, dynamic>>(
+                            value: car,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.directions_car, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "${car['brand']} ${car['model']}",
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.directions_car,
+                                size: 16,
+                                color: Color(0xFF137FEC),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _selectedCar == null
+                                    ? "Car"
+                                    : "${_selectedCar!['brand']}",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Icon(Icons.keyboard_arrow_down, size: 16),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -664,5 +877,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 }
