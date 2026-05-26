@@ -12,7 +12,8 @@ class AddBookingModal extends StatefulWidget {
 
 class _AddBookingModalState extends State<AddBookingModal> {
   final String baseUrl = "https://gearupapp.runasp.net/api";
-
+  List<String> recommendedMechanicIds = [];
+  bool isFromChatbot = false;
   // ✅ نفس React (IDs مش names)
   String mechanicId = "";
   String carId = "";
@@ -37,13 +38,55 @@ class _AddBookingModalState extends State<AddBookingModal> {
   @override
   void initState() {
     super.initState();
-    fetchMechanics();
-    fetchCars();
+    loadChatbotBookingData();
   }
 
   void safeSetState(VoidCallback fn) {
     if (!mounted) return;
     setState(fn);
+  }
+
+  Future<void> loadChatbotBookingData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final savedCarId = prefs.getString('booking_car_id');
+
+    final mechanicsJson = prefs.getString('recommended_mechanics');
+
+    if (mechanicsJson != null && mechanicsJson.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(mechanicsJson);
+
+        recommendedMechanicIds = List<String>.from(
+          decoded.map((e) => e.toString()),
+        );
+
+        isFromChatbot = recommendedMechanicIds.isNotEmpty;
+      } catch (e) {
+        debugPrint("decode error => $e");
+      }
+    } else {
+      isFromChatbot = false;
+      recommendedMechanicIds = [];
+    }
+
+    await fetchCars();
+    await fetchMechanics();
+
+    // ✅ auto select car
+    if (savedCarId != null && savedCarId.isNotEmpty) {
+      final exists = cars.any((c) => c["id"] == savedCarId);
+
+      if (exists) {
+        safeSetState(() {
+          carId = savedCarId;
+        });
+      }
+    }
+
+    // ✅ remove after use
+    await prefs.remove('booking_car_id');
+    await prefs.remove('recommended_mechanics');
   }
 
   // ================= TOKEN =================
@@ -66,17 +109,25 @@ class _AddBookingModalState extends State<AddBookingModal> {
 
   Future<void> fetchMechanics() async {
     try {
-      setState(() => loadingMechanics = true);
+      safeSetState(() => loadingMechanics = true);
 
       final res = await http.get(
-        Uri.parse("$baseUrl/mechanics"),
+        Uri.parse("$baseUrl/mechanics/verified"),
         headers: {"Accept": "*/*"},
       );
 
-      final data = jsonDecode(res.body);
-      final list = data["data"] ?? [];
+      final body = jsonDecode(res.body);
 
-      final mapped = list
+      List data = body["data"] ?? [];
+
+      // ✅ لو جاي من الشات
+      if (isFromChatbot && recommendedMechanicIds.isNotEmpty) {
+        data = data.where((item) {
+          return recommendedMechanicIds.contains(item["id"].toString());
+        }).toList();
+      }
+
+      final mapped = data
           .where((e) => e["mechanicProfileId"] != null)
           .map<Map<String, String>>(
             (e) => {
@@ -86,11 +137,26 @@ class _AddBookingModalState extends State<AddBookingModal> {
           )
           .toList();
 
-      setState(() => mechanics = mapped);
+      safeSetState(() {
+        mechanics = mapped;
+      });
+
+      // ✅ Auto select mechanic
+      if (mapped.isNotEmpty && isFromChatbot) {
+        mechanicId = mapped.first["id"] ?? "";
+
+        await fetchServices(mechanicId);
+      }
     } catch (e) {
-      mechanics = [];
+      debugPrint("fetchMechanics error => $e");
+
+      safeSetState(() {
+        mechanics = [];
+      });
     } finally {
-      safeSetState(() => loadingMechanics = false);
+      safeSetState(() {
+        loadingMechanics = false;
+      });
     }
   }
 
@@ -128,17 +194,17 @@ class _AddBookingModalState extends State<AddBookingModal> {
     }
   }
 
-  Future<void> fetchServices(String id) async {
+  Future<void> fetchServices(String selectedMechanicId) async {
     try {
-      if (id.isEmpty) {
-        setState(() {
+      if (selectedMechanicId.isEmpty) {
+        safeSetState(() {
           services = [];
           mechanicServiceId = "";
         });
         return;
       }
 
-      setState(() {
+      safeSetState(() {
         loadingServices = true;
         services = [];
         mechanicServiceId = "";
@@ -147,27 +213,38 @@ class _AddBookingModalState extends State<AddBookingModal> {
       final token = await getToken();
 
       final res = await http.get(
-        Uri.parse("$baseUrl/specializations/mechanic/$id/priced-services"),
+        Uri.parse(
+          "$baseUrl/specializations/mechanic/$selectedMechanicId/priced-services",
+        ),
         headers: getHeaders(token),
       );
 
-      final data = jsonDecode(res.body);
+      final body = jsonDecode(res.body);
 
-      final list = data is List ? data : data["data"] ?? [];
+      final data = body is List ? body : body["data"] ?? [];
 
-      final mapped = list.map<Map<String, dynamic>>((e) {
+      final mapped = data.map<Map<String, dynamic>>((e) {
         return {
           "id": e["id"].toString(),
           "name": e["subSpecializationName"],
-          "price": e["price"],
+          "price": double.tryParse(e["price"].toString()) ?? 0,
+          "subSpecializationId": e["subSpecializationId"],
         };
       }).toList();
 
-      setState(() => services = mapped);
+      safeSetState(() {
+        services = mapped;
+      });
     } catch (e) {
-      services = [];
+      debugPrint("fetch services error => $e");
+
+      safeSetState(() {
+        services = [];
+      });
     } finally {
-      safeSetState(() => loadingServices = false);
+      safeSetState(() {
+        loadingServices = false;
+      });
     }
   }
 
@@ -222,10 +299,26 @@ class _AddBookingModalState extends State<AddBookingModal> {
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         Navigator.pop(context);
+
         showMsg("تم إضافة الحجز بنجاح");
       } else {
         final data = jsonDecode(res.body);
-        showMsg(data["message"] ?? "حصل خطأ");
+
+        final errors = data["errors"];
+
+        String message =
+            errors?["mechanicId"]?[0] ??
+            errors?["carId"]?[0] ??
+            errors?["mechanicServiceId"]?[0] ??
+            errors?["date"]?[0] ??
+            errors?["slotStart"]?[0] ??
+            errors?["slotEnd"]?[0] ??
+            data["error"] ??
+            data["title"] ??
+            data["message"] ??
+            "حدث خطأ أثناء إنشاء الحجز";
+
+        showMsg(message);
       }
     } catch (e) {
       showMsg("خطأ في الاتصال");

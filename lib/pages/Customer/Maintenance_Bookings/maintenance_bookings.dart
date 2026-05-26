@@ -53,6 +53,7 @@ class MaintenanceBookingsPage extends StatefulWidget {
 }
 
 class _MaintenanceBookingsPageState extends State<MaintenanceBookingsPage> {
+  bool _openedFromChatbot = false;
   List<dynamic> _bookings = [];
   bool _isLoading = true;
   String _selectedStatus = "الكل";
@@ -65,9 +66,38 @@ class _MaintenanceBookingsPageState extends State<MaintenanceBookingsPage> {
   void initState() {
     super.initState();
     _fetchBookings();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkOpenBookingModal();
+    });
   }
 
   // ================= API =================
+  Future<void> _checkOpenBookingModal() async {
+    if (_openedFromChatbot) return;
+
+    final prefs = await SharedPreferences.getInstance();
+
+    final mechanicsJson = prefs.getString('recommended_mechanics');
+    final carId = prefs.getString('booking_car_id');
+
+    final hasChatbotData =
+        mechanicsJson != null &&
+        mechanicsJson.isNotEmpty &&
+        carId != null &&
+        carId.isNotEmpty;
+
+    if (hasChatbotData && mounted) {
+      _openedFromChatbot = true;
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => const AddBookingModal(),
+      );
+    }
+  }
+
   Future<void> _fetchBookings() async {
     setState(() => _isLoading = true);
     try {
