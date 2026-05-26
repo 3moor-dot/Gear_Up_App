@@ -23,6 +23,7 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
   // --- الألوان والحالة العامة ---
   final Color primaryColor = const Color(0xFF137FEC);
   final ScrollController _scrollController = ScrollController();
+  bool _isFromChatbot = false;
   Timer? _countdownTimer; // عداد الدائرة
   Timer? _pollingTimer; // فحص السيرفر
   int _currentStep = 1;
@@ -65,7 +66,10 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchCars();
+
+    Future.microtask(() async {
+      await _initializeFromChatbot();
+    });
   }
 
   @override
@@ -76,6 +80,65 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
   }
 
   // --- API Methods (نفس المنطق السابق) ---
+  void _resetAllData() {
+    _isFromChatbot = false;
+    _selectedCarId = null;
+
+    _issueController.clear();
+    _selectedImage = null;
+
+    _requestType = 1;
+    _serviceMode = 2;
+    _serviceType = null;
+
+    _selectedDate = null;
+    _selectedTime = null;
+    _dateController.clear();
+    _timeController.clear();
+
+    _currentLocation = null;
+    _markers.clear();
+  }
+
+  Future<void> _initializeFromChatbot() async {
+    final prefs = await SharedPreferences.getInstance();
+    final fromChatbot = prefs.getBool("is_from_chatbot") ?? false;
+
+    // امسح الفلاج فور استخدامه
+    await prefs.remove("is_from_chatbot");
+    debugPrint(
+  "chatbot = ${prefs.getBool("is_from_chatbot")}"
+);
+
+    if (!fromChatbot) {
+      // تنظيف أي بيانات قديمة من الشات بوت
+      await prefs.remove("booking_car_id");
+      await prefs.remove("issue_summary");
+      await prefs.remove("recommended_mechanics");
+
+      _resetAllData();
+
+      await _fetchCars();
+      return;
+    }
+
+    await _fetchCars();
+
+    final savedCarId = prefs.getString("booking_car_id");
+    final issueSummary = prefs.getString("issue_summary");
+
+    setState(() {
+      _isFromChatbot = true;
+      _selectedCarId = savedCarId;
+      _issueController.text = issueSummary ?? "";
+      _requestType = 1;
+      _serviceMode = 1;
+      _serviceType = 1;
+    });
+
+    await _getCurrentLocation();
+  }
+
   Future<void> _fetchCars() async {
     try {
       // 1. جلب التوكن المحفوظ من ذاكرة الهاتف
@@ -107,7 +170,7 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
           } else if (data is List) {
             _cars = data;
           }
-          if (_cars.isNotEmpty) {
+          if (_isFromChatbot && _cars.isNotEmpty && _selectedCarId == null) {
             _selectedCarId = _cars[0]['id'].toString();
           }
         });
@@ -950,50 +1013,71 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('userToken');
-      var uri = Uri.parse("https://gearupapp.runasp.net/api/requests");
+
+      // 👇 تحديد الـ endpoint حسب مصدر الطلب
+      final String url = _isFromChatbot
+          ? "https://gearupapp.runasp.net/api/requests/chatbot"
+          : "https://gearupapp.runasp.net/api/requests";
+
+      var uri = Uri.parse(url);
+
       var request = http.MultipartRequest("POST", uri);
+
       request.headers.addAll({
         'Authorization': 'Bearer $token',
-        'Content-Type': 'multipart/form-data',
-        'Accept': 'application/json', // 👈 مهم
+        'Accept': 'application/json',
       });
 
       request.fields.addAll({
-        'carId': _selectedCarId!,
-        'issueDescription': _issueController.text,
-        'requestType': _requestType.toString(),
-        'serviceMode': _serviceMode.toString(),
-        'serviceType': (_serviceType ?? 1).toString(),
-        'latitude': _currentLocation!.latitude.toString(),
-        'longitude': _currentLocation!.longitude.toString(),
+        'CarId': _selectedCarId!,
+        'IssueDescription': _issueController.text,
+        'RequestType': _requestType.toString(),
+        'ServiceMode': _serviceMode.toString(),
+        'ServiceType': (_serviceType ?? 1).toString(),
+        'Latitude': _currentLocation!.latitude.toString(),
+        'Longitude': _currentLocation!.longitude.toString(),
       });
 
+      // 👇 لو الطلب مجدول
       if (_requestType == 2) {
-        // التأكد من إرسال التاريخ والوقت بصيغة YYYY-MM-DD و HH:mm
-        request.fields['scheduledDate'] =
+        request.fields['ScheduledDate'] =
             "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}";
 
-        request.fields['scheduledTime'] =
-            _timeController.text; // التي أصبحت الآن بنظام 24 ساعة
+        request.fields['ScheduledTime'] = _timeController.text;
       }
+
+      // 👇 الصورة
       if (_selectedImage != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'problemPhoto',
+            'ProblemPhoto',
             _selectedImage!.path,
-          ), // تغيير image إلى ProblemPhoto
+          ),
         );
       }
-      debugPrint("➡️ POST: $uri");
+
+      // 👇 لو الطلب جاي من الشات ابعت MechanicIds
+      if (_isFromChatbot) {
+        final recommendedMechanics =
+            prefs.getStringList("recommended_mechanics") ?? [];
+
+        for (var id in recommendedMechanics) {
+          request.fields.addAll({"MechanicIds": id});
+        }
+      }
+
+      debugPrint("➡️ POST: $url");
       debugPrint("📦 Fields: ${request.fields}");
-      debugPrint("📸 Has Image: ${_selectedImage != null}");
+
       final response = await request.send().timeout(
         const Duration(seconds: 30),
       );
 
       final respStr = await response.stream.bytesToString();
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = json.decode(respStr);
+
         _requestId = data['requestId']?.toString() ?? data['id']?.toString();
 
         _timeLeft = 300;
@@ -1006,10 +1090,7 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
           if (_timeLeft > 0) {
             _timeLeft--;
 
-            // تحديث الصفحة الرئيسية
             setState(() {});
-
-            // 🔥🔥🔥 تحديث الـ BottomSheet (ده كان ناقص)
             _onTimerTick?.call();
           } else {
             timer.cancel();
@@ -1017,13 +1098,17 @@ class _MaintenanceRequestScreenState extends State<MaintenanceRequestScreen> {
         });
 
         _showMechanicsSelectionSheet();
-        _startPolling(); // لبدء فحص الميكانيكيين كل 5 ثواني
+        _startPolling();
       } else {
         final errorData = json.decode(respStr);
+
         debugPrint("❌ ERROR RESPONSE: $errorData");
+
         throw Exception(errorData.toString());
       }
     } catch (e) {
+      debugPrint("❌ EXCEPTION: $e");
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("فشل إرسال الطلب")));

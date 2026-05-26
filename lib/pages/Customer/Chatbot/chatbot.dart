@@ -70,6 +70,34 @@ class _ChatbotPageState extends State<ChatbotPage> {
     );
   }
 
+  Future<void> _saveEmergencyRequestData(dynamic extra) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setBool("is_from_chatbot", true);
+
+      if (extra['car_id'] != null) {
+        await prefs.setString('booking_car_id', extra['car_id'].toString());
+      }
+
+      if (extra['issue_summary'] != null) {
+        await prefs.setString(
+          'issue_summary',
+          extra['issue_summary'].toString(),
+        );
+      }
+
+      if (extra['recommended_mechanics'] != null) {
+        await prefs.setString(
+          'recommended_mechanics',
+          jsonEncode(extra['recommended_mechanics']),
+        );
+      }
+    } catch (e) {
+      debugPrint("Save booking data error: $e");
+    }
+  }
+
   Future<void> _loadSavedChat() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -413,7 +441,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
                       if (extra['requires_mechanic'] == true &&
                           extra['is_emergency'] == true)
-                        _buildSOSButton(isDark),
+                        _buildSOSButton(isDark, extra),
                       if (extra['requires_mechanic'] == true &&
                           extra['is_emergency'] == false)
                         _buildBookingButton(),
@@ -583,16 +611,54 @@ class _ChatbotPageState extends State<ChatbotPage> {
     );
   }
 
-  Widget _buildSOSButton(bool isDark) {
+  Widget _buildSOSButton(bool isDark, dynamic extra) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 12),
       child: ElevatedButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/customer/request');
+        onPressed: () async {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+
+            // ✅ مهم جداً
+            await prefs.setBool("is_from_chatbot", true);
+
+            // ✅ نفس الـ keys اللي شاشة الطلب بتقرأها
+            if (extra['car_id'] != null) {
+              await prefs.setString(
+                'booking_car_id',
+                extra['car_id'].toString(),
+              );
+            }
+
+            if (extra['issue_summary'] != null) {
+              await prefs.setString(
+                'issue_summary',
+                extra['issue_summary'].toString(),
+              );
+            }
+
+            // ✅ الميكانيكيين
+            if (extra['recommended_mechanics'] != null) {
+              final mechanics = List<String>.from(
+                extra['recommended_mechanics'].map((e) => e.toString()),
+              );
+
+              await prefs.setStringList('recommended_mechanics', mechanics);
+            }
+
+            // ✅ روح للصفحة
+            Navigator.pushNamed(
+              context,
+              '/customer/request',
+              arguments: {"fromChatbot": true},
+            );
+          } catch (e) {
+            debugPrint("SOS save error: $e");
+          }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFEF4444), // أحمر
+          backgroundColor: const Color(0xFFEF4444),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -767,23 +833,22 @@ class _ChatbotPageState extends State<ChatbotPage> {
               child: Row(
                 children: [
                   if (_userCars.isNotEmpty)
-
-                  IconButton(
-                    icon: Icon(
-                      _selectedImage != null
-                          ? Icons.image
-                          : Icons.attach_file_rounded,
-                      color: primaryColor,
+                    IconButton(
+                      icon: Icon(
+                        _selectedImage != null
+                            ? Icons.image
+                            : Icons.attach_file_rounded,
+                        color: primaryColor,
+                      ),
+                      onPressed: () async {
+                        final XFile? image = await _picker.pickImage(
+                          source: ImageSource.gallery,
+                        );
+                        if (image != null) {
+                          setState(() => _selectedImage = File(image.path));
+                        }
+                      },
                     ),
-                    onPressed: () async {
-                      final XFile? image = await _picker.pickImage(
-                        source: ImageSource.gallery,
-                      );
-                      if (image != null) {
-                        setState(() => _selectedImage = File(image.path));
-                      }
-                    },
-                  ),
 
                   Expanded(
                     child: TextField(
@@ -797,64 +862,64 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: PopupMenuButton<Map<String, dynamic>>(
-                        onSelected: (car) {
-                          setState(() {
-                            _selectedCar = car;
-                          });
-                        },
-                        itemBuilder: (context) => _userCars.map((car) {
-                          return PopupMenuItem<Map<String, dynamic>>(
-                            value: car,
-                            child: Row(
-                              children: [
-                                const Icon(Icons.directions_car, size: 18),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "${car['brand']} ${car['model']}",
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: PopupMenuButton<Map<String, dynamic>>(
+                      onSelected: (car) {
+                        setState(() {
+                          _selectedCar = car;
+                        });
+                      },
+                      itemBuilder: (context) => _userCars.map((car) {
+                        return PopupMenuItem<Map<String, dynamic>>(
+                          value: car,
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
-                                Icons.directions_car,
-                                size: 16,
-                                color: Color(0xFF137FEC),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _selectedCar == null
-                                    ? "Car"
-                                    : "${_selectedCar!['brand']}",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                              const Icon(Icons.directions_car, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "${car['brand']} ${car['model']}",
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const Icon(Icons.keyboard_arrow_down, size: 16),
                             ],
                           ),
+                        );
+                      }).toList(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.directions_car,
+                              size: 16,
+                              color: Color(0xFF137FEC),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _selectedCar == null
+                                  ? "Car"
+                                  : "${_selectedCar!['brand']}",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const Icon(Icons.keyboard_arrow_down, size: 16),
+                          ],
                         ),
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
