@@ -73,7 +73,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
     await prefs.remove('userToken');
     await prefs.remove('userData');
     if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
     }
   }
 

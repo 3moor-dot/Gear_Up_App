@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:gear_up_app/components/ThemeToggle/theme_toggle.dart';
 import 'package:gear_up_app/main.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gear_up_app/pages/Notification/notification_service.dart'; // تأكد من صحة مسار السيرفيس عندك
 
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({super.key});
@@ -31,10 +30,10 @@ class DashboardHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // الجهة اليمنى
+              // الجهة اليمنى: جرس الإشعارات وزر الثيم
               Row(
                 children: [
-                  NotificationBell(isDark: isDark),
+                  NotificationBell(isDark: isDark), // جرس الإشعارات الذكي
                   const SizedBox(width: 8),
                   ThemeToggle(
                     isDark: themeProvider.isDark,
@@ -42,6 +41,8 @@ class DashboardHeader extends StatelessWidget {
                   ),
                 ],
               ),
+              
+              // الجهة اليسرى: العنوان والقائمة تظهر حسب الشاشة
               Row(
                 children: [
                   if (MediaQuery.of(context).size.width > 360)
@@ -49,20 +50,16 @@ class DashboardHeader extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "لوحة التحكم",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                          "مركز الصيانة",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         Text(
-                          "GearUp Mechanic",
+                          "إدارة ورشة GearUp",
                           style: TextStyle(color: Colors.grey, fontSize: 11),
                         ),
                       ],
                     ),
                   const SizedBox(width: 12),
-
                   if (!isLargeScreen)
                     Builder(
                       builder: (context) => InkWell(
@@ -74,15 +71,9 @@ class DashboardHeader extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: primaryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: primaryColor.withOpacity(0.2),
-                            ),
+                            border: Border.all(color: primaryColor.withOpacity(0.2)),
                           ),
-                          child: Icon(
-                            Icons.menu_open_rounded,
-                            color: primaryColor,
-                            size: 28,
-                          ),
+                          child: Icon(Icons.menu_open_rounded, color: primaryColor, size: 28),
                         ),
                       ),
                     ),
@@ -91,88 +82,81 @@ class DashboardHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          
         ],
       ),
     );
   }
 }
 
-class NotificationBell extends StatefulWidget {
+// 🔥 الـ Widget الخاص بالجرس بعد إعادة بنائه بالـ Consumer لاحتساب العدد لايف
+class NotificationBell extends StatelessWidget {
   final bool isDark;
 
   const NotificationBell({super.key, required this.isDark});
 
   @override
-  State<NotificationBell> createState() => _NotificationBellState();
-}
-
-class _NotificationBellState extends State<NotificationBell> {
-  int notificationCount = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadNotifications();
-  }
-
-  Future<void> _loadNotifications() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("userToken");
-
-    String key = token == null
-        ? "guest_notifications"
-        : "notifications_${token.substring(token.length - 10)}";
-
-    final saved = prefs.getString(key);
-
-    if (saved != null) {
-      final list = jsonDecode(saved);
-      if (!mounted) return;
-      setState(() {
-        notificationCount = list.length;
-      });
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // فتح صفحة الإشعارات
-        Navigator.pushNamed(context, "/customer/notifications")
-            .then((_) => _loadNotifications()); // إعادة التحميل بعد العودة
+        // الـ Route مسجل في main.dart باسم '/notification'
+        Navigator.pushNamed(context, "/notification");
       },
-      child: Stack(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: widget.isDark
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.notifications_none_outlined,
-              size: 22,
-              color: widget.isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-          if (notificationCount > 0)
-            Positioned(
-              right: 6,
-              top: 6,
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
+      child: Consumer<NotificationService>(
+        builder: (context, notificationService, child) {
+          // جلب عدد الإشعارات الحالية مباشرة من الـ List اللي جوه السيرفيس
+          final int notificationCount = notificationService.notifications.length;
+
+          return Stack(
+            clipBehavior: Clip.none, // عشان نضمن إن البادج الأحمر ميتأكلش من الأطراف
+            children: [
+              // شكل كارت الزر الخلفي للجرس
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.notifications_none_outlined,
+                  size: 22,
+                  color: isDark ? Colors.white : Colors.black87,
                 ),
               ),
-            ),
-        ],
+              
+              // عرض الرقم فقط إذا كان هناك إشعارات أكبر من صفر
+              if (notificationCount > 0)
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: isDark ? const Color(0xFF0F1323) : Colors.white, width: 1.5), // إطار شيك يفصل البادج عن الزر
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Center(
+                      child: Text(
+                        // لو الإشعارات كتيرة جداً، اعرض +99 زي التطبيقات الاحترافية
+                        notificationCount > 99 ? '+99' : '$notificationCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Arial', // خط سليم للأرقام الصغيرة
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

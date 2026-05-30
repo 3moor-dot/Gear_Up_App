@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:gear_up_app/pages/Notification/notification_service.dart';
+import 'package:provider/provider.dart';
 import 'package:gear_up_app/pages/LogIn/log_in.dart';
 import 'package:gear_up_app/pages/Registration/register.dart';
 import 'package:gear_up_app/pages/Forgot_Password/forgot_password.dart';
 import 'package:gear_up_app/pages/Verfiy_Account/verfiy_account.dart';
-import 'package:gear_up_app/pages/NotificationBell/notification_bell.dart';
+import 'package:gear_up_app/pages/Notification/notifications_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 
 import 'package:gear_up_app/pages/Customer/Control panel/control_panel.dart';
 import 'package:gear_up_app/pages/Customer/Reminder/maintenance_reminders.dart';
@@ -17,22 +21,45 @@ import 'package:gear_up_app/pages/Customer/Chatbot/chatbot.dart';
 
 import 'package:gear_up_app/pages/Mechanic/Mechanic_Dashboard/mechanic_dashboard.dart';
 import 'package:gear_up_app/pages/Mechanic/Request/request_history.dart';
-import 'package:gear_up_app/pages/Mechanic/Schedule/Schedule.dart';
+import 'package:gear_up_app/pages/Mechanic/Schedule/schedule.dart';
 import 'package:gear_up_app/pages/Mechanic/Booking/booking.dart';
 import 'package:gear_up_app/pages/Mechanic/Reviewing/reviewing.dart';
-import 'package:gear_up_app/pages/Mechanic/Profile_Settings/Mprofile.dart';
+import 'package:gear_up_app/pages/Mechanic/Profile_Settings//Mprofile.dart';
 
-void main() {
+// 🔥 دالة الـ Background Handler الخاصة بآي أو إس وأندرويد والتطبيق مقفول تماماً
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // تهيئة فايربيز جوه الـ Background Process
+  await Firebase.initializeApp();
+  print("تم استلام إشعار في الخلفية (iOS/Android): ${message.messageId}");
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: const GearUpApp(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+
+        // ✅ FIX: أضف NotificationService هنا
+        ChangeNotifierProvider(
+          create: (_) => NotificationService(),
+        ),
+      ],
+      child: const MyApp(),
     ),
   );
 }
 
-class GearUpApp extends StatelessWidget {
-  const GearUpApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -40,51 +67,48 @@ class GearUpApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'GearUp AI',
+      title: 'GearUp',
+      theme: ThemeData(
+        brightness: Brightness.light,
+        primaryColor: const Color(0xFF137FEC),
+        scaffoldBackgroundColor: Colors.white,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xFF137FEC),
+        scaffoldBackgroundColor: const Color(0xFF0B1220),
+      ),
+      themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
       
-      // إعدادات اللغة العربية (RTL)
-      locale: const Locale('ar', 'AE'), 
-      supportedLocales: const [Locale('ar', 'AE')],
+      // الدعم اللغوي للعربي
+      locale: const Locale('ar', 'EG'),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-
-      // إعدادات الثيم
-      themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
-      theme: ThemeData(
-        useMaterial3: true, // تفعيل Material 3 لأشكال أحدث للأزرار والكروت
-        brightness: Brightness.light,
-        primaryColor: const Color(0xFF137FEC),
-        scaffoldBackgroundColor: Colors.white,
-        fontFamily: 'Cairo', // يفضل استخدام خط Cairo للعربية
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F1323),
-        fontFamily: 'Cairo',
-      ),
-      initialRoute: '/login', 
+      supportedLocales: const [
+        Locale('ar', 'EG'),
+      ],
+      
+      initialRoute: '/',
       routes: {
-                    /* PUBLIC PAGES */
-        '/login': (context) => const LoginPage(),
+        '/': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),
         '/verify-account': (context) => const VerificationPage(),
-        
-                    /* CUSTOMER PAGES */
+        '/notification': (context) => const NotificationsPage(),
+
+        /* CUSTOMER PAGES */
         '/customer/dashboard': (context) => const CustomerDashboardPage(),
         '/customer/reminders': (context) => const MaintenanceRemindersPage(),
         '/customer/servicehistory': (context) => const ServiceHistoryPage(),
         '/customer/bookings': (context) => const MaintenanceBookingsPage(),
         '/customer/request': (context) => const MaintenanceRequestScreen(),
         '/customer/profilesettings': (context) => const ProfileSettingsPage(),
-        '/customer/notifications': (context) => const NotificationsPage(),
         '/customer/chatbot': (context) => const ChatbotPage(),
 
-                    /* MECHANIC PAGES */
+        /* MECHANIC PAGES */
         '/mechanic/dashboard': (context) => const MachineDashboard(),
         '/mechanic/request-history': (context) => const MRequestHistory(),
         '/mechanic/schedule': (context) => const SchedulePage(),
@@ -96,7 +120,6 @@ class GearUpApp extends StatelessWidget {
   }
 }
 
-// كلاس ThemeProvider (تأكد من وجوده في ملف منفصل أو بقائه هنا)
 class ThemeProvider with ChangeNotifier {
   bool _isDark = false;
   bool get isDark => _isDark;

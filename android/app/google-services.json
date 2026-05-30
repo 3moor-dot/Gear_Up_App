@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "248894815785",
+    "project_id": "gearup-4a96d",
+    "storage_bucket": "gearup-4a96d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:248894815785:android:8a71fdb9ac29fc0c6c6638",
+        "android_client_info": {
+          "package_name": "com.example.gear_up_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBaAH7Te1LQAZJR6bUoQEEWSPXaH-IC8_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

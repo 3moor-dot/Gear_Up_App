@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:gear_up_app/pages/Notification/notification_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,151 +13,208 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // المتحكمات (Controllers)
-  final TextEditingController _emailOrPhoneController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  
-  // حالات الصفحة (State)
-  bool _isLoading = false;
-  bool _obscurePassword = true; // للتحكم في ظهور كلمة المرور
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
-  final Color primaryColor = const Color(0xFF137FEC);
+  bool loading = false;
+  bool showPassword = false;
 
-  // دالة تسجيل الدخول
-  Future<void> _handleLogin() async {
-    final String emailOrPhone = _emailOrPhoneController.text.trim();
-    final String password = _passwordController.text.trim();
+  @override
+  void initState() {
+    super.initState();
+    _autoLogin();
+  }
 
-    if (emailOrPhone.isEmpty || password.isEmpty) {
-      _showMessage("برجاء ملء جميع الحقول", isError: true);
+  // 🔥 دالة الدخول التلقائي الآمنة
+  Future<void> _autoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("userToken");
+    final data = prefs.getString("userData");
+
+    if (token != null && data != null) {
+      try {
+        final user = jsonDecode(data);
+        // قراءة الـ role بشكل آمن وتحويله لـ int حتى لو محفوظ بصيغة تانية
+        int roleId = 1;
+        if (user["role"] != null) {
+          roleId = int.tryParse(user["role"].toString()) ?? 1;
+        }
+        
+        // تشغيل سيرفيس الإشعارات تلقائياً والتطبيق بيفتح
+        if (mounted) {
+          Provider.of<NotificationService>(context, listen: false)
+              .init(userToken: token, role: roleId)
+              .catchError((e) => print("Notification Auto-Init Error: $e"));
+        }
+        
+        _navigate(roleId);
+      } catch (e) {
+        print("Auto login error: $e");
+      }
+    }
+  }
+
+  // 🔥 دالة التنقل المحدثة لاستقبال dynamic وحمايتها من الـ Null
+  void _navigate(dynamic role) {
+    if (!mounted) return;
+
+    // تحويل آمن للـ role إلى int مهما كان نوعه القادم (String أو int أو null)
+    int roleId = 1; 
+    if (role != null) {
+      roleId = int.tryParse(role.toString()) ?? 1;
+    }
+
+    print("🔀 Navigating based on role ID: $roleId");
+
+    if (roleId == 3) {
+      Navigator.pushReplacementNamed(context, "/admin/admindashboard");
+    } else if (roleId == 2) {
+      Navigator.pushReplacementNamed(context, "/mechanics/machineprofile");
+    } else {
+      Navigator.pushReplacementNamed(context, "/customer/profilesettings");
+    }
+  }
+
+  // 🔥 دالة تسجيل الدخول بعد حمايتها من الـ Type Mismatch
+  Future<void> _login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("برجاء ملء جميع الحقول")),
+      );
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() => loading = true);
 
     try {
       final response = await http.post(
         Uri.parse("https://gearupapp.runasp.net/api/auth/login"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "emailOrPhone": emailOrPhone,
+          "emailOrPhone": email,
           "password": password,
           "rememberMe": true,
         }),
       );
 
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        final token = resData["token"];
+        final user = resData["user"];
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final SharedPreferences prefs = await SharedPreferences.getInstance();
-        
-        // 1. حفظ التوكن
-        final String token = data['accessToken'] ?? "";
-        await prefs.setString('userToken', token);
+        if (token != null && user != null) {
+          // تحويل الـ role القادم من الـ API فوراً لـ int
+          int roleId = 1;
+          if (user["role"] != null) {
+            roleId = int.tryParse(user["role"].toString()) ?? 1;
+          }
 
-        // 2. استخراج وحفظ بيانات المستخدم (نفس منطق React)
-        dynamic rawData = data['data'] ?? data;
-        final userData = {
-          "firstName": rawData['firstName']?.toString() ?? "",
-          "lastName": rawData['lastName']?.toString() ?? "",
-          "email": rawData['email'] ?? "",
-          "phone": rawData['phone'] ?? "",
-          "role": rawData['role'],
-          "profileImage": rawData['profileImage'],
-        };
-        await prefs.setString('userData', jsonEncode(userData));
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString("userToken", token);
+          await prefs.setString("userData", jsonEncode(user));
 
-        // 3. التوجيه بناءً على الرتبة
-        if (!mounted) return;
-        final int role = userData['role'];
+          // ربط وتشغيل سيرفيس الإشعارات فوراً بالـ Token والـ Role الصح
+          if (mounted) {
+            await Provider.of<NotificationService>(context, listen: false)
+                .init(userToken: token, role: roleId)
+                .catchError((e) => print("Notification Login-Init Error: $e"));
+          }
 
-        if (role == 2) {
-          Navigator.pushReplacementNamed(context, '/mechanics/machineprofile');
-        } else if (role == 1) {
-          Navigator.pushReplacementNamed(context, '/customer/profilesettings');
+          _navigate(roleId);
+        } else {
+          _showError("بيانات المستخدم غير مكتملة من السيرفر");
         }
       } else {
-        _showMessage(data['message'] ?? "بيانات الدخول غير صحيحة", isError: true);
+        _showError("فشل تسجيل الدخول، تأكد من البيانات");
       }
-    } catch (err) {
-      _showMessage("فشل الاتصال بالسيرفر، حاول مجدداً", isError: true);
+    } catch (e) {
+      _showError("حدث خطأ في الاتصال بالسيرفر");
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => loading = false);
     }
   }
 
-  void _showMessage(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, textAlign: TextAlign.center),
-        backgroundColor: isError ? Colors.redAccent : Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F1323) : Colors.white,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(25),
+          child: SafeArea(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Text(
+                  "تسجيل الدخول",
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 30),
-                
-                // صورة السيارة (Header Image)
-                _buildHeaderImage(primaryColor),
-
-                const SizedBox(height: 30),
-                
-                // الترحيب
-                Text(
-                  "مرحباً بعودتك 👋",
-                  style: TextStyle(
-                    fontSize: 28, 
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black87,
+                _input(
+                  controller: emailController,
+                  hint: "البريد الإلكتروني أو رقم الهاتف",
+                  icon: Icons.email_outlined,
+                ),
+                const SizedBox(height: 15),
+                _input(
+                  controller: passwordController,
+                  hint: "كلمة المرور",
+                  icon: Icons.lock_outline,
+                  obscure: !showPassword,
+                  suffix: IconButton(
+                    onPressed: () {
+                      setState(() => showPassword = !showPassword);
+                    },
+                    icon: Icon(
+                      showPassword ? Icons.visibility : Icons.visibility_off,
+                    ),
                   ),
                 ),
-                const Text(
-                  "تسجيل الدخول إلى حسابك",
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-
-                const SizedBox(height: 40),
-
-                // حقل البريد أو الهاتف
-                _buildInputField(
-                  label: "البريد الإلكتروني أو رقم الهاتف",
-                  hint: "ادخل البريد الإلكتروني أو رقم الهاتف",
-                  icon: Icons.phone_android_outlined,
-                  controller: _emailOrPhoneController,
-                  isDark: isDark,
-                ),
-
-                const SizedBox(height: 20),
-
-                // حقل كلمة المرور مع زر العين
-                _buildPasswordField(isDark),
-
-                const SizedBox(height: 35),
-
-                // زر تسجيل الدخول
-                _buildLoginButton(),
-
                 const SizedBox(height: 25),
-
-                // رابط التسجيل
-                _buildRegisterLink(isDark),
-                
-                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: loading ? null : _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF137FEC),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: loading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          "تسجيل الدخول",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("ليس لديك حساب؟"),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, "/register");
+                      },
+                      child: const Text("إنشاء حساب"),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -164,133 +223,27 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // --- مكونات واجهة المستخدم (Widgets) ---
-
-  Widget _buildHeaderImage(Color primaryColor) {
-    return Column(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Image.asset(
-            'assets/car.png',
-            width: double.infinity,
-            height: 180,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              height: 180,
-              color: primaryColor.withOpacity(0.1),
-              child: Icon(Icons.directions_car_filled, size: 80, color: primaryColor),
-            ),
-          ),
-        ),
-        const SizedBox(height: 15),
-        const Text(
-          "العناية الذكية بالسيارة، بشكل مبسط",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInputField({
-    required String label,
+  Widget _input({
+    required TextEditingController controller,
     required String hint,
     required IconData icon,
-    required TextEditingController controller,
-    required bool isDark,
+    bool obscure = false,
+    Widget? suffix,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? primaryColor.withOpacity(0.1) : const Color(0xFF8EC1F5).withOpacity(0.2),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: TextField(
-            controller: controller,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-              prefixIcon: Icon(icon, color: Colors.grey, size: 20),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 15),
-            ),
-          ),
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: const Color(0xFFF1F5FD),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
         ),
-      ],
-    );
-  }
-
-  Widget _buildPasswordField(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text("كلمة المرور", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-            GestureDetector(
-              onTap: () => Navigator.pushNamed(context, '/forgot-password'),
-              child: Text("هل نسيت كلمة السر؟", style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? primaryColor.withOpacity(0.1) : const Color(0xFF8EC1F5).withOpacity(0.2),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: TextField(
-            controller: _passwordController,
-            obscureText: _obscurePassword,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black),
-            decoration: InputDecoration(
-              hintText: "ادخل كلمة المرور",
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-              prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey, size: 20),
-              suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.grey, size: 20),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 15),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoginButton() {
-    return ElevatedButton(
-      onPressed: _isLoading ? null : _handleLogin,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primaryColor,
-        minimumSize: const Size(double.infinity, 55),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        elevation: 0,
       ),
-      child: _isLoading
-          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-          : const Text("تسجيل الدخول", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-    );
-  }
-
-  Widget _buildRegisterLink(bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text("ليس لديك حساب؟", style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(context, '/register'),
-          child: Text(" إنضم إلينا الآن", style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
-        ),
-      ],
     );
   }
 }
