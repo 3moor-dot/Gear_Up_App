@@ -375,28 +375,30 @@ class _PersonalDataTabState extends State<PersonalDataTab> {
       children: [
         Stack(
           children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: primaryColor.withOpacity(0.1),
-                  width: 4,
-                ),
-                image: DecorationImage(
-                  image: _selectedImage != null
-                      ? FileImage(_selectedImage!)
-                      : (profilePhotoUrl != null
-                                ? NetworkImage(profilePhotoUrl!)
-                                : const NetworkImage(
-                                    "https://ui-avatars.com/api/?name=User",
-                                  ))
-                            as ImageProvider,
-                  fit: BoxFit.cover,
-                ),
+            ClipOval(
+              child: SizedBox(
+                width: 120,
+                height: 120,
+                child: _selectedImage != null
+                    ? Image.file(_selectedImage!, fit: BoxFit.cover)
+                    : Image.network(
+                        profilePhotoUrl ??
+                            "https://api.dicebear.com/7.x/initials/png?seed=User",
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey.shade200,
+                            child: const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                          );
+                        },
+                      ),
               ),
             ),
+
             if (isEditable)
               Positioned(
                 bottom: 0,
@@ -480,9 +482,9 @@ class _PersonalDataTabState extends State<PersonalDataTab> {
       children: [
         Padding(
           padding: const EdgeInsets.only(right: 4, bottom: 6),
-          child: const Text(
-            "البريد الإلكتروني (للعرض فقط)",
-            style: TextStyle(
+          child: Text(
+            label,
+            style: const TextStyle(
               color: Colors.grey,
               fontWeight: FontWeight.w900,
               fontSize: 13,

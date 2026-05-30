@@ -1,0 +1,37 @@
+dependencies: \
+  /Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/FirebaseMessaging.build/module.modulemap \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessaging.m \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Public/FirebaseMessaging/FIRMessaging.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Foundation.framework/Modules/module.modulemap \
+  /Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/GoogleUtilities.build/module.modulemap \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseCore/Extension/FirebaseCoreInternal.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/FirebaseCore.build/module.modulemap \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRAppInternal.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRComponent.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRComponentContainer.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRComponentType.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRHeartbeatLogger.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRLibrary.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseCore/Extension/FIRLogger.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseInstallations/Source/Library/Private/FirebaseInstallationsInternal.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/FirebaseInstallations.build/module.modulemap \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Interop/FIRMessagingInterop.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingAnalytics.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/Interop/Analytics/Public/FIRAnalyticsInterop.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingCode.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingConstants.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingContextManagerService.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingDefines.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingLogger.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingPubSub.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingRemoteNotificationsProxy.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingRmqManager.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingSyncMessageManager.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessagingUtilities.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/FIRMessaging_Private.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/NSError+FIRMessaging.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingAuthService.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingCheckinService.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingTokenInfo.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingAPNSInfo.h \
+  /Users/amr/Documents/GitHub/Gear_Up_App/macos/Pods/FirebaseMessaging/FirebaseMessaging/Sources/Token/FIRMessagingTokenManager.h

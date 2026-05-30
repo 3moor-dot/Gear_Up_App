@@ -1,0 +1,1 @@
+ /Users/amr/Documents/GitHub/Gear_Up_App/build/160ecdc7efdc2269f91c0b17e256149c/dart_build_result.json:  /Users/amr/Documents/GitHub/Gear_Up_App/.dart_tool/package_config.json /Users/amr/Documents/GitHub/Gear_Up_App/pubspec.yaml /usr/local/share/flutter/bin/cache/dart-sdk/version

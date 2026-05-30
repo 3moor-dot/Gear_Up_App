@@ -50,6 +50,18 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "checked_yaml",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/checked_yaml-2.0.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
+      "name": "cli_util",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/cli_util-0.4.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "clock",
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/clock-1.1.2",
       "packageUri": "lib/",
@@ -218,10 +230,10 @@
       "languageVersion": "2.17"
     },
     {
-      "name": "flutter_lints",
-      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/flutter_lints-6.0.0",
+      "name": "flutter_launcher_icons",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/flutter_launcher_icons-0.14.4",
       "packageUri": "lib/",
-      "languageVersion": "3.8"
+      "languageVersion": "3.0"
     },
     {
       "name": "flutter_local_notifications",
@@ -440,6 +452,12 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "image",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/image-4.8.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "image_picker",
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/image_picker-1.2.1",
       "packageUri": "lib/",
@@ -494,6 +512,12 @@
       "languageVersion": "3.3"
     },
     {
+      "name": "json_annotation",
+      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/json_annotation-4.12.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
       "name": "latlong2",
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/latlong2-0.9.1",
       "packageUri": "lib/",
@@ -516,12 +540,6 @@
       "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/leak_tracker_testing-3.0.2",
       "packageUri": "lib/",
       "languageVersion": "3.2"
-    },
-    {
-      "name": "lints",
-      "rootUri": "file:///Users/amr/.pub-cache/hosted/pub.dev/lints-6.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.8"
     },
     {
       "name": "logging",

@@ -24,34 +24,50 @@ import 'package:gear_up_app/pages/Mechanic/Request/request_history.dart';
 import 'package:gear_up_app/pages/Mechanic/Schedule/schedule.dart';
 import 'package:gear_up_app/pages/Mechanic/Booking/booking.dart';
 import 'package:gear_up_app/pages/Mechanic/Reviewing/reviewing.dart';
-import 'package:gear_up_app/pages/Mechanic/Profile_Settings//Mprofile.dart';
+import 'package:gear_up_app/pages/Mechanic/Profile_Settings/Mprofile.dart';
 
 // 🔥 دالة الـ Background Handler الخاصة بآي أو إس وأندرويد والتطبيق مقفول تماماً
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // تهيئة فايربيز جوه الـ Background Process
   await Firebase.initializeApp();
-  print("تم استلام إشعار في الخلفية (iOS/Android): ${message.messageId}");
+  print("إشعار في الخلفية: ${message.notification?.title}");
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); // تهيئة الفايربيز
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
+  // 1. إعداد معالج الخلفية
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
+  // 2. طلب صلاحيات الإشعارات للآيفون (iOS)
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    print('المستخدم وافق على الصلاحيات في الآيفون');
+
+    // 3. السطر السحري: إجبار الآيفون على إظهار الإشعار كـ Banner والتطبيق مفتوح!
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+  }
+
+  // 🔥 التعديل الجوهري: تغليف الـ MyApp بالـ MultiProvider هنا فوق الشجرة بالكامل
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-
-        // ✅ FIX: أضف NotificationService هنا
         ChangeNotifierProvider(
           create: (_) => NotificationService(),
-        ),
+        ), // عشان تشتغل في الـ Login والشاشات التانية
       ],
       child: const MyApp(),
     ),
@@ -63,6 +79,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // الآن السطر ده هيشتغل تمام لأن الـ ThemeProvider أصبح فوق الـ MyApp في الشجرة
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
@@ -79,7 +96,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0B1220),
       ),
       themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
-      
+
       // الدعم اللغوي للعربي
       locale: const Locale('ar', 'EG'),
       localizationsDelegates: const [
@@ -87,10 +104,8 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('ar', 'EG'),
-      ],
-      
+      supportedLocales: const [Locale('ar', 'EG')],
+
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),

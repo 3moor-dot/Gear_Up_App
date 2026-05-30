@@ -1,0 +1,19 @@
+{
+  "" : {
+    "diagnostics" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/rive_native-primary.dia",
+    "emit-module-dependencies" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/rive_native-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/rive_native-primary-emit-module.dia",
+    "pch" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/rive_native-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/rive_native-primary.swiftdeps"
+  },
+  "/Users/amr/.pub-cache/hosted/pub.dev/rive_native-0.1.5/macos/rive_native/Sources/rive_native/RiveNativePlugin.swift" : {
+    "const-values" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/RiveNativePlugin.swiftconstvalues",
+    "dependencies" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/RiveNativePlugin.d",
+    "diagnostics" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/RiveNativePlugin.dia",
+    "index-unit-output-path" : "/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/RiveNativePlugin.o",
+    "llvm-bc" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/RiveNativePlugin.bc",
+    "object" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/RiveNativePlugin.o",
+    "swift-dependencies" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/RiveNativePlugin.swiftdeps",
+    "swiftmodule" : "/Users/amr/Documents/GitHub/Gear_Up_App/build/macos/Build/Intermediates.noindex/Pods.build/Debug/rive_native.build/Objects-normal/x86_64/RiveNativePlugin~partial.swiftmodule"
+  }
+}

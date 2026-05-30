@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:signalr_netcore/http_connection_options.dart';
 import 'package:signalr_netcore/hub_connection.dart';
 import 'package:signalr_netcore/hub_connection_builder.dart';
@@ -16,7 +17,8 @@ class NotificationService extends ChangeNotifier {
   final Dio _dio = Dio();
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-
+  String? _userToken;
+  int? _userRole;
   String? token;
   String? userRole;
   bool isShaking = false;
@@ -42,25 +44,90 @@ class NotificationService extends ChangeNotifier {
     "Booking Completed": "تم الانتهاء من تقديم الخدمة بنجاح.",
   };
 
+  Future<void> uploadDeviceToken(String userToken) async {
+    try {
+      print("⏳ جاري محاولة تهيئة الـ Token...");
+
+      // تأخير بسيط للأمان
+      await Future.delayed(const Duration(seconds: 2));
+
+      String? fcmToken;
+
+      // حماية خاصة بالـ iOS للأكونت المجاني
+      try {
+        fcmToken = await FirebaseMessaging.instance.getToken();
+      } catch (iosError) {
+        print("⚠️ تنبيه: تعذر جلب الـ FCM Token بسبب قيود حساب آبل المجاني.");
+        print("💡 سيتم تخطي الرفع لضمان استمرار عمل التطبيق كربونياً كالويب!");
+        // نضع توكن وهمي للمحاكي فقط عشان الكود ميعطلش
+        fcmToken = "simulator_fallback_token_free_account";
+      }
+
+      // لو شغال أندرويد هيجيب التوكن الحقيقي فوراً، ولو آيفون مجاني هيستخدم الوهمي لتفادي الـ Crash
+      if (fcmToken == "simulator_fallback_token_free_account") {
+        print("🚀 تخطي الرفع: التطبيق سينتقل للـ Dashboard الآن.");
+        return;
+      }
+
+      print("📱 FCM Token جاهز للرفع: $fcmToken");
+
+      // إرسال التوكن للسيرفر الخاص بك (للأندرويد أو الـ iOS المدفوع مستقبلاً)
+      final response = await http.post(
+        Uri.parse("https://gearupapp.runasp.net/api/auth/save-device-token"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $userToken",
+        },
+        body: jsonEncode({"token": fcmToken, "deviceType": "iOS"}),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ تم ربط الجهاز بالسيرفر بنجاح.");
+      }
+    } catch (e) {
+      print("❌ خطأ غير متوقع في كود التوكن: $e");
+    }
+  }
+
   // 🔥 دالة الـ init المحدثة تترجم رقم الـ role تلقائياً ليتوافق مع الويب والموبايل معاً
-  Future<void> init({required String userToken, required dynamic role}) async {
-    token = userToken;
-    
-    // ترجمة الـ role القادم (سواء كان 1 و 2 أو نصوص)
-    if (role == 1 || role.toString().toLowerCase() == 'customer') {
-      userRole = 'customer';
-    } else if (role == 2 || role.toString().toLowerCase() == 'mechanic') {
-      userRole = 'mechanic';
-    } else {
-      userRole = role.toString().toLowerCase();
+  Future<void> init({required String userToken, required int role}) async {
+    _userToken = userToken;
+    _userRole = role;
+
+    // 1. الاستماع للإشعارات الفورية والتطبيق مفتوح (Foreground)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("🔔 وصل إشعار فوري والتطبيق مفتوح: ${message.notification?.title}");
+
+      // هنا السيستم بيتحول لـ "زي الويب" تماماً:
+      _handleForegroundNotification(message);
+    });
+
+    // 2. الاستماع في حالة إذا كان التطبيق في الخلفية والمستخدم ضغط على الإشعار ليفتحه
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print("📩 المستخدم ضغط على الإشعار وتفتح التطبيق: ${message.data}");
+      _handleNotificationClick(message);
+    });
+  }
+
+  void _handleNotificationClick(RemoteMessage message) {
+    // بناءً على البيانات المرسلة من الـ Backend (الـ Data Payload)
+    // يمكنك توجيه المستخدم لشاشة معينة مباشرة
+    if (message.data["route"] != null) {
+      // مثال: Navigator.pushNamed(context, message.data["route"]);
+    }
+  }
+
+  // 🔥 دالة معالجة الإشعار الفوري والتطبيق مفتوح (مثل الويب)
+  void _handleForegroundNotification(RemoteMessage message) {
+    // يمكنك هنا إطلاق أحداث لتحديث البيانات تلقائياً بناءً على نوع الإشعار القادم من الـ Backend
+    // مثال: إذا كان الإشعار يحتوي على نوع "SOS"
+    if (message.data["type"] == "SOS") {
+      print("🚨 طلب استغاثة SOS جديد وصل للفني!");
+      // هنا تستدعي دالة الـ Refresh الخاصة بجدول الطلبات للفني ليظهر الطلب فوراً في شاشته بدون إعادة تحميل
     }
 
-    print("🔔 NotificationService Initialized for Role: $userRole");
-
-    // استدعاء دوال التهيئة الأصلية الخاصة بك
-    await initializeLocalNotifications();
-    await initializeFirebaseMessaging();
-    await _startSignalR();
+    // إخطار الـ UI بوجود إشعار جديد لزيادة الـ Badge أو تلوين جرس الإشعارات
+    notifyListeners();
   }
 
   // --- تهيئة الإشعارات المحلية (Local Notifications) ---
@@ -69,10 +136,10 @@ class NotificationService extends ChangeNotifier {
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
     const InitializationSettings settings = InitializationSettings(
       android: androidSettings,
@@ -92,16 +159,12 @@ class NotificationService extends ChangeNotifier {
   // --- تهيئة إشعارات فايربيز (Firebase Messaging) للخلفية ---
   Future<void> initializeFirebaseMessaging() async {
     try {
-      NotificationSettings settings =
-          await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      NotificationSettings settings = await FirebaseMessaging.instance
+          .requestPermission(alert: true, badge: true, sound: true);
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         print('User granted Firebase messaging permission.');
-        
+
         String? fcmToken = await FirebaseMessaging.instance.getToken();
         print("FCM Token: $fcmToken");
         if (fcmToken != null && token != null) {
@@ -129,7 +192,8 @@ class NotificationService extends ChangeNotifier {
 
   // 🔥 دالة الـ SignalR مع تعديل قنوات الاستماع لتعمل فوراً والتطبيق مفتوح (Foreground)
   Future<void> _startSignalR() async {
-    if (_hubConnection != null && _hubConnection!.state == HubConnectionState.Connected) {
+    if (_hubConnection != null &&
+        _hubConnection!.state == HubConnectionState.Connected) {
       return;
     }
 
@@ -138,21 +202,26 @@ class NotificationService extends ChangeNotifier {
           "https://gearupapp.runasp.net/notificationHub",
           options: HttpConnectionOptions(
             accessTokenFactory: () async => token ?? '',
-            transport: HttpTransportType.LongPolling, // مستقر جداً على الموبايل والتطبيق مفتوح ويمنع الفصل
+            transport: HttpTransportType
+                .LongPolling, // مستقر جداً على الموبايل والتطبيق مفتوح ويمنع الفصل
           ),
         )
         .build();
 
-    _hubConnection!.onclose(({error}) => print("SignalR Connection Closed ❌: $error"));
+    _hubConnection!.onclose(
+      ({error}) => print("SignalR Connection Closed ❌: $error"),
+    );
 
     // 1. الاستماع الديناميكي حسب الـ Role (مثل ReceiveNotification_customer)
     if (userRole != null) {
-      final capitalizeRole = userRole![0].toUpperCase() + userRole!.substring(1); // Customer / Mechanic
-      
+      final capitalizeRole =
+          userRole![0].toUpperCase() +
+          userRole!.substring(1); // Customer / Mechanic
+
       _hubConnection!.on("ReceiveNotification_$userRole", (arguments) {
         _handleIncomingNotification(arguments);
       });
-      
+
       _hubConnection!.on("ReceiveNotification_$capitalizeRole", (arguments) {
         _handleIncomingNotification(arguments);
       });
@@ -176,8 +245,10 @@ class NotificationService extends ChangeNotifier {
     if (arguments != null && arguments.isNotEmpty) {
       print("New Foreground Notification Received: ${arguments.first}");
       try {
-        final Map<String, dynamic> json = Map<String, dynamic>.from(arguments.first as Map);
-        
+        final Map<String, dynamic> json = Map<String, dynamic>.from(
+          arguments.first as Map,
+        );
+
         // ترجمة العناوين والرسائل للحجوزات لتطابق مسميات الويب العربي
         String? finalTitle = json['title'];
         String? finalMessage = json['message'] ?? json['description'];
@@ -199,21 +270,21 @@ class NotificationService extends ChangeNotifier {
         };
 
         final item = NotificationItem.fromJson(updatedJson);
-        
+
         // إضافة الإشعار أول القائمة وتحديث الـ UI كاش وفوراً
         notifications.insert(0, item);
         _saveNotificationsToPrefs();
-        
+
         // تشغيل الهز والتحديث اللحظي لجرس التنبيهات
         isShaking = true;
         notifyListeners();
-        
+
         // إظهار التنبيه المنبثق المحلي هيدر الشاشة
         showLocalNotification(
-          item.title ?? "تنبيه جديد 🔔", 
-          item.message ?? item.description ?? ""
+          item.title ?? "تنبيه جديد 🔔",
+          item.message ?? item.description ?? "",
         );
-        
+
         // إيقاف الهز بعد ثانيتين
         Future.delayed(const Duration(seconds: 2), () {
           isShaking = false;
@@ -227,15 +298,16 @@ class NotificationService extends ChangeNotifier {
 
   // إظهار شعار التنبيه (Heads-up Notification) أعلى الشاشة والتطبيق مفتوح
   void showLocalNotification(String title, String body) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'gearup_notifications',
-      'GearUp Alerts',
-      channelDescription: 'Notifications for GearUp Application',
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: true,
-      enableVibration: true,
-    );
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'gearup_notifications',
+          'GearUp Alerts',
+          channelDescription: 'Notifications for GearUp Application',
+          importance: Importance.max,
+          priority: Priority.high,
+          playSound: true,
+          enableVibration: true,
+        );
 
     const NotificationDetails platformDetails = NotificationDetails(
       android: androidDetails,
@@ -253,8 +325,9 @@ class NotificationService extends ChangeNotifier {
   // --- حفظ وجلب البيانات محلياً (SharedPreferences) ---
   Future<void> _saveNotificationsToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final List<String> jsonList =
-        notifications.map((item) => jsonEncode(item.toJson())).toList();
+    final List<String> jsonList = notifications
+        .map((item) => jsonEncode(item.toJson()))
+        .toList();
     await prefs.setStringList('cached_notifications', jsonList);
   }
 
