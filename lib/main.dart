@@ -9,7 +9,6 @@ import 'package:gear_up_app/pages/Verfiy_Account/verfiy_account.dart';
 import 'package:gear_up_app/pages/Notification/notifications_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'firebase_options.dart';
 
 import 'package:gear_up_app/pages/Customer/Control panel/control_panel.dart';
 import 'package:gear_up_app/pages/Customer/Reminder/maintenance_reminders.dart';

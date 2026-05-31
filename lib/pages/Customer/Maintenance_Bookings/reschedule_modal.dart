@@ -4,10 +4,14 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RescheduleModal extends StatefulWidget {
-  final Map<String, dynamic> booking;
+  final Map<String, dynamic>? booking;
   final VoidCallback? onSuccess;
 
-  const RescheduleModal({super.key, required this.booking, this.onSuccess});
+  const RescheduleModal({
+    super.key,
+    required this.booking,
+    this.onSuccess,
+  });
 
   @override
   State<RescheduleModal> createState() => _RescheduleModalState();
@@ -17,6 +21,7 @@ class _RescheduleModalState extends State<RescheduleModal> {
   String newDate = "";
   String newSlotStart = "";
   String newSlotEnd = "";
+
   bool loading = false;
 
   final String baseUrl = "https://gearupapp.runasp.net/api";
@@ -24,36 +29,75 @@ class _RescheduleModalState extends State<RescheduleModal> {
   @override
   void initState() {
     super.initState();
-    _initData();
+    _fillData();
   }
 
-  // ================= INIT (زي useEffect) =================
-  void _initData() {
-    newDate = _formatDate(widget.booking["date"]);
+  @override
+  void didUpdateWidget(covariant RescheduleModal oldWidget) {
+    super.didUpdateWidget(oldWidget);
 
-    newSlotStart = _normalizeTime(
-      widget.booking["slotStart"] ?? widget.booking["time"] ?? "",
-    );
-
-    newSlotEnd = _normalizeTime(widget.booking["slotEnd"] ?? "");
+    if (oldWidget.booking?["id"] != widget.booking?["id"]) {
+      _fillData();
+    }
   }
 
-  // ================= HELPERS =================
-  String _formatDate(String date) {
+  void _fillData() {
+    final booking = widget.booking;
+
+    if (booking == null) return;
+
+    setState(() {
+      newDate = _formatDateForInput(booking["date"] ?? "");
+
+      newSlotStart = _normalizeTimeForInput(
+        booking["slotStart"] ?? booking["time"] ?? "",
+      );
+
+      newSlotEnd = _normalizeTimeForInput(
+        booking["slotEnd"] ?? "",
+      );
+    });
+  }
+
+  String _formatDateForInput(String date) {
+    if (date.isEmpty) return "";
+
     try {
-      return DateTime.parse(date).toIso8601String().split("T")[0];
+      return DateTime.parse(date)
+          .toIso8601String()
+          .split("T")[0];
     } catch (_) {
       return date.split("T")[0];
     }
   }
 
-  String _normalizeTime(String time) {
+  String _normalizeTimeForInput(String time) {
     if (time.isEmpty) return "";
-    final clean = time.contains("T") ? time.split("T")[1] : time;
-    return clean.split(".")[0].substring(0, 5);
+
+    final pureTime =
+        time.contains("T") ? time.split("T")[1] : time;
+
+    final cleaned = pureTime.split(".")[0];
+
+    final hhmmss =
+        RegExp(r'^\d{2}:\d{2}:\d{2}$');
+
+    final hhmm =
+        RegExp(r'^\d{2}:\d{2}$');
+
+    if (hhmmss.hasMatch(cleaned)) {
+      return cleaned.substring(0, 5);
+    }
+
+    if (hhmm.hasMatch(cleaned)) {
+      return cleaned;
+    }
+
+    return "";
   }
 
-  String _toApiTime(String time) {
+  String _toApiTimeFormat(String time) {
+    if (time.isEmpty) return "";
     return time.length == 5 ? "$time:00" : time;
   }
 
@@ -62,17 +106,27 @@ class _RescheduleModalState extends State<RescheduleModal> {
     return prefs.getString("userToken");
   }
 
-  // ================= API =================
   Future<void> _handleReschedule() async {
-    final bookingId = widget.booking["id"];
+    final bookingId = widget.booking?["id"];
 
-    if (newDate.isEmpty || newSlotStart.isEmpty || newSlotEnd.isEmpty) {
-      _showMsg("من فضلك املي البيانات");
+    if (bookingId == null) {
+      _showError("معرف الحجز غير موجود");
+      return;
+    }
+
+    if (newDate.isEmpty ||
+        newSlotStart.isEmpty ||
+        newSlotEnd.isEmpty) {
+      _showWarning(
+        "من فضلك املي التاريخ ووقت البداية ووقت النهاية",
+      );
       return;
     }
 
     if (newSlotEnd.compareTo(newSlotStart) <= 0) {
-      _showMsg("وقت النهاية لازم يكون بعد البداية");
+      _showWarning(
+        "وقت النهاية لازم يكون بعد وقت البداية",
+      );
       return;
     }
 
@@ -81,8 +135,10 @@ class _RescheduleModalState extends State<RescheduleModal> {
 
       final token = await _getToken();
 
-      final res = await http.put(
-        Uri.parse("$baseUrl/bookings/$bookingId/reschedule"),
+      final response = await http.put(
+        Uri.parse(
+          "$baseUrl/bookings/$bookingId/reschedule",
+        ),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -90,55 +146,164 @@ class _RescheduleModalState extends State<RescheduleModal> {
         },
         body: jsonEncode({
           "newDate": newDate,
-          "newSlotStart": _toApiTime(newSlotStart),
-          "newSlotEnd": _toApiTime(newSlotEnd),
+          "newSlotStart":
+              _toApiTimeFormat(newSlotStart),
+          "newSlotEnd":
+              _toApiTimeFormat(newSlotEnd),
         }),
       );
 
-      if (res.statusCode == 200 || res.statusCode == 204) {
+      if (response.statusCode == 200 ||
+          response.statusCode == 204) {
         if (!mounted) return;
-        Navigator.pop(context);
+
+        _showSuccess(
+          "تم تغيير موعد الحجز بنجاح",
+        );
+
         widget.onSuccess?.call();
-        _showMsg("تم تغيير الموعد بنجاح");
-      } else {
-        final data = jsonDecode(res.body);
-        _showMsg(data["message"] ?? "خطأ أثناء التعديل");
+
+        Navigator.pop(context);
+        return;
       }
+
+      String message = "حدث خطأ أثناء تغيير الموعد";
+
+      try {
+        final data = jsonDecode(response.body);
+
+        message =
+            data["title"] ??
+            data["message"] ??
+            data["errors"]?["newSlotStart"]?[0] ??
+            data["errors"]?["newSlotEnd"]?[0] ??
+            data["errors"]?["newDate"]?[0] ??
+            message;
+      } catch (_) {}
+
+      _showError(message);
     } catch (e) {
-      _showMsg("حدث خطأ");
+      _showError(
+        "حدث خطأ أثناء تغيير الموعد",
+      );
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
   }
 
-  void _showMsg(String msg) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(msg, textAlign: TextAlign.center)));
+  void _showSuccess(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.green,
+        content: Text(
+          text,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
   }
 
-  // ================= UI =================
+  void _showError(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.red,
+        content: Text(
+          text,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  void _showWarning(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.orange,
+        content: Text(
+          text,
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: newDate.isNotEmpty
+          ? DateTime.parse(newDate)
+          : DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null) {
+      setState(() {
+        newDate =
+            picked.toIso8601String().split("T")[0];
+      });
+    }
+  }
+
+  Future<void> _pickStartTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        newSlotStart =
+            "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+      });
+    }
+  }
+
+  Future<void> _pickEndTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        newSlotEnd =
+            "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final bgColor = isDark ? const Color(0xFF0F172A) : Colors.white;
-    final fieldColor = isDark
-        ? const Color(0xFF1E293B)
-        : const Color(0xFFF1F5F9);
-    final textColor = isDark ? Colors.white : Colors.black;
+    final isDark =
+        Theme.of(context).brightness ==
+            Brightness.dark;
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding:
+          const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 24,
+      ),
       child: Container(
-        padding: const EdgeInsets.all(25),
+        constraints: const BoxConstraints(
+          maxWidth: 700,
+        ),
+        padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(30),
-          border: isDark
-              ? Border.all(color: Colors.white10)
-              : Border.all(color: Colors.grey.shade200),
+          color: isDark
+              ? const Color(0xFF0F172A)
+              : Colors.white,
+          borderRadius:
+              BorderRadius.circular(40),
+          border: Border.all(
+            color: isDark
+                ? Colors.white10
+                : Colors.grey.shade300,
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -146,109 +311,119 @@ class _RescheduleModalState extends State<RescheduleModal> {
             Align(
               alignment: Alignment.topLeft,
               child: IconButton(
-                icon: Icon(Icons.close, color: textColor),
-                onPressed: () => Navigator.pop(context),
+                icon: Icon(
+                  Icons.close,
+                  color: isDark
+                      ? Colors.white
+                      : Colors.black,
+                ),
+                onPressed: () =>
+                    Navigator.pop(context),
               ),
             ),
 
             Text(
               "تغيير موعد",
               style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: textColor,
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+                color: isDark
+                    ? Colors.white
+                    : Colors.black,
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
-            _buildField(
-              label: "التاريخ",
-              value: newDate,
-              bg: fieldColor,
-              textColor: textColor,
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime(2100),
-                );
+            Row(
+              children: [
+                Expanded(
+                  child: _buildPickerField(
+                    "التاريخ الجديد",
+                    newDate,
+                    Icons.calendar_month,
+                    _pickDate,
+                    isDark,
+                  ),
+                ),
+                const SizedBox(width: 12),
 
-                if (picked != null) {
-                  setState(() {
-                    newDate = picked.toIso8601String().split("T")[0];
-                  });
-                }
-              },
+                Expanded(
+                  child: _buildPickerField(
+                    "وقت البداية",
+                    newSlotStart,
+                    Icons.access_time,
+                    _pickStartTime,
+                    isDark,
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: _buildPickerField(
+                    "وقت النهاية",
+                    newSlotEnd,
+                    Icons.access_time,
+                    _pickEndTime,
+                    isDark,
+                  ),
+                ),
+              ],
             ),
 
-            _buildField(
-              label: "وقت البداية",
-              value: newSlotStart,
-              bg: fieldColor,
-              textColor: textColor,
-              onTap: () async {
-                final time = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-
-                if (time != null) {
-                  setState(() {
-                    newSlotStart =
-                        "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
-                  });
-                }
-              },
-            ),
-
-            _buildField(
-              label: "وقت النهاية",
-              value: newSlotEnd,
-              bg: fieldColor,
-              textColor: textColor,
-              onTap: () async {
-                final time = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-
-                if (time != null) {
-                  setState(() {
-                    newSlotEnd =
-                        "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
-                  });
-                }
-              },
-            ),
-
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark
-                          ? const Color(0xFF1E293B)
-                          : Colors.grey.shade200,
-                      foregroundColor: textColor,
+                    onPressed: loading
+                        ? null
+                        : () =>
+                            Navigator.pop(
+                              context,
+                            ),
+                    style:
+                        ElevatedButton.styleFrom(
+                      padding:
+                          const EdgeInsets.symmetric(
+                        vertical: 16,
+                      ),
                     ),
-                    child: const Text("إلغاء"),
+                    child: const Text(
+                      "إلغاء",
+                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
+
+                const SizedBox(width: 12),
+
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: loading ? null : _handleReschedule,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF137FEC),
+                    onPressed: loading
+                        ? null
+                        : _handleReschedule,
+                    style:
+                        ElevatedButton.styleFrom(
+                      backgroundColor:
+                          const Color(
+                        0xFF137FEC,
+                      ),
+                      padding:
+                          const EdgeInsets.symmetric(
+                        vertical: 16,
+                      ),
                     ),
                     child: Text(
-                      loading ? "جاري..." : "تغيير الموعد",
-                      style: const TextStyle(color: Colors.white),
+                      loading
+                          ? "جاري تغيير الموعد..."
+                          : "تغيير الموعد",
+                      style:
+                          const TextStyle(
+                        color: Colors.white,
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -260,41 +435,70 @@ class _RescheduleModalState extends State<RescheduleModal> {
     );
   }
 
-  Widget _buildField({
-    required String label,
-    required String value,
-    required VoidCallback onTap,
-    required Color bg,
-    required Color textColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(label, style: TextStyle(color: textColor)),
-          const SizedBox(height: 5),
-          InkWell(
-            onTap: onTap,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.white10),
-              ),
-              child: Text(
-                value.isEmpty ? "اختر..." : value,
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  color: value.isEmpty ? Colors.grey : textColor,
+  Widget _buildPickerField(
+    String label,
+    String value,
+    IconData icon,
+    VoidCallback onTap,
+    bool isDark,
+  ) {
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.end,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark
+                ? Colors.white
+                : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: onTap,
+          borderRadius:
+              BorderRadius.circular(20),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF1E293B)
+                  : const Color(0xFFF3F4F6),
+              borderRadius:
+                  BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: isDark
+                      ? Colors.white70
+                      : Colors.black54,
                 ),
-              ),
+                const Spacer(),
+                Text(
+                  value.isEmpty
+                      ? "اختر..."
+                      : value,
+                  style: TextStyle(
+                    color: value.isEmpty
+                        ? Colors.grey
+                        : (isDark
+                              ? Colors.white
+                              : Colors.black),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
