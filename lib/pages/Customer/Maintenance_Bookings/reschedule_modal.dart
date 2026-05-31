@@ -7,11 +7,7 @@ class RescheduleModal extends StatefulWidget {
   final Map<String, dynamic>? booking;
   final VoidCallback? onSuccess;
 
-  const RescheduleModal({
-    super.key,
-    required this.booking,
-    this.onSuccess,
-  });
+  const RescheduleModal({super.key, required this.booking, this.onSuccess});
 
   @override
   State<RescheduleModal> createState() => _RescheduleModalState();
@@ -41,6 +37,17 @@ class _RescheduleModalState extends State<RescheduleModal> {
     }
   }
 
+  bool _isValidTime(String start, String end) {
+    final startParts = start.split(":");
+    final endParts = end.split(":");
+
+    final startMinutes =
+        int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+    final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+
+    return endMinutes > startMinutes;
+  }
+
   void _fillData() {
     final booking = widget.booking;
 
@@ -53,9 +60,7 @@ class _RescheduleModalState extends State<RescheduleModal> {
         booking["slotStart"] ?? booking["time"] ?? "",
       );
 
-      newSlotEnd = _normalizeTimeForInput(
-        booking["slotEnd"] ?? "",
-      );
+      newSlotEnd = _normalizeTimeForInput(booking["slotEnd"] ?? "");
     });
   }
 
@@ -63,9 +68,7 @@ class _RescheduleModalState extends State<RescheduleModal> {
     if (date.isEmpty) return "";
 
     try {
-      return DateTime.parse(date)
-          .toIso8601String()
-          .split("T")[0];
+      return DateTime.parse(date).toIso8601String().split("T")[0];
     } catch (_) {
       return date.split("T")[0];
     }
@@ -74,16 +77,13 @@ class _RescheduleModalState extends State<RescheduleModal> {
   String _normalizeTimeForInput(String time) {
     if (time.isEmpty) return "";
 
-    final pureTime =
-        time.contains("T") ? time.split("T")[1] : time;
+    final pureTime = time.contains("T") ? time.split("T")[1] : time;
 
     final cleaned = pureTime.split(".")[0];
 
-    final hhmmss =
-        RegExp(r'^\d{2}:\d{2}:\d{2}$');
+    final hhmmss = RegExp(r'^\d{2}:\d{2}:\d{2}$');
 
-    final hhmm =
-        RegExp(r'^\d{2}:\d{2}$');
+    final hhmm = RegExp(r'^\d{2}:\d{2}$');
 
     if (hhmmss.hasMatch(cleaned)) {
       return cleaned.substring(0, 5);
@@ -98,7 +98,7 @@ class _RescheduleModalState extends State<RescheduleModal> {
 
   String _toApiTimeFormat(String time) {
     if (time.isEmpty) return "";
-    return time.length == 5 ? "$time:00" : time;
+    return "$time:00"; // دايمًا خليها ثواني
   }
 
   Future<String?> _getToken() async {
@@ -114,19 +114,13 @@ class _RescheduleModalState extends State<RescheduleModal> {
       return;
     }
 
-    if (newDate.isEmpty ||
-        newSlotStart.isEmpty ||
-        newSlotEnd.isEmpty) {
-      _showWarning(
-        "من فضلك املي التاريخ ووقت البداية ووقت النهاية",
-      );
+    if (newDate.isEmpty || newSlotStart.isEmpty || newSlotEnd.isEmpty) {
+      _showWarning("من فضلك املي التاريخ ووقت البداية ووقت النهاية");
       return;
     }
 
-    if (newSlotEnd.compareTo(newSlotStart) <= 0) {
-      _showWarning(
-        "وقت النهاية لازم يكون بعد وقت البداية",
-      );
+    if (!_isValidTime(newSlotStart, newSlotEnd)) {
+      _showWarning("وقت النهاية لازم يكون بعد وقت البداية");
       return;
     }
 
@@ -136,9 +130,7 @@ class _RescheduleModalState extends State<RescheduleModal> {
       final token = await _getToken();
 
       final response = await http.put(
-        Uri.parse(
-          "$baseUrl/bookings/$bookingId/reschedule",
-        ),
+        Uri.parse("$baseUrl/bookings/$bookingId/reschedule"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -146,20 +138,15 @@ class _RescheduleModalState extends State<RescheduleModal> {
         },
         body: jsonEncode({
           "newDate": newDate,
-          "newSlotStart":
-              _toApiTimeFormat(newSlotStart),
-          "newSlotEnd":
-              _toApiTimeFormat(newSlotEnd),
+          "newSlotStart": _toApiTimeFormat(newSlotStart),
+          "newSlotEnd": _toApiTimeFormat(newSlotEnd),
         }),
       );
 
-      if (response.statusCode == 200 ||
-          response.statusCode == 204) {
+      if (response.statusCode == 200 || response.statusCode == 204) {
         if (!mounted) return;
 
-        _showSuccess(
-          "تم تغيير موعد الحجز بنجاح",
-        );
+        _showSuccess("تم تغيير موعد الحجز بنجاح");
 
         widget.onSuccess?.call();
 
@@ -183,9 +170,7 @@ class _RescheduleModalState extends State<RescheduleModal> {
 
       _showError(message);
     } catch (e) {
-      _showError(
-        "حدث خطأ أثناء تغيير الموعد",
-      );
+      _showError("حدث خطأ أثناء تغيير الموعد");
     } finally {
       if (mounted) {
         setState(() => loading = false);
@@ -197,10 +182,7 @@ class _RescheduleModalState extends State<RescheduleModal> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: Colors.green,
-        content: Text(
-          text,
-          textAlign: TextAlign.center,
-        ),
+        content: Text(text, textAlign: TextAlign.center),
       ),
     );
   }
@@ -209,10 +191,7 @@ class _RescheduleModalState extends State<RescheduleModal> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: Colors.red,
-        content: Text(
-          text,
-          textAlign: TextAlign.center,
-        ),
+        content: Text(text, textAlign: TextAlign.center),
       ),
     );
   }
@@ -221,28 +200,37 @@ class _RescheduleModalState extends State<RescheduleModal> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: Colors.orange,
-        content: Text(
-          text,
-          textAlign: TextAlign.center,
-        ),
+        content: Text(text, textAlign: TextAlign.center),
       ),
     );
   }
 
   Future<void> _pickDate() async {
+    final now = DateTime.now();
+
+    DateTime initial;
+
+    try {
+      initial = newDate.isNotEmpty ? DateTime.parse(newDate) : now;
+    } catch (_) {
+      initial = now;
+    }
+
+    // 🔥 أهم سطر: تأكد أنه مش قبل firstDate
+    if (initial.isBefore(now)) {
+      initial = now;
+    }
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: newDate.isNotEmpty
-          ? DateTime.parse(newDate)
-          : DateTime.now(),
-      firstDate: DateTime.now(),
+      initialDate: initial,
+      firstDate: now,
       lastDate: DateTime(2100),
     );
 
     if (picked != null) {
       setState(() {
-        newDate =
-            picked.toIso8601String().split("T")[0];
+        newDate = picked.toIso8601String().split("T")[0];
       });
     }
   }
@@ -277,32 +265,19 @@ class _RescheduleModalState extends State<RescheduleModal> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness ==
-            Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding:
-          const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 24,
-      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
-        constraints: const BoxConstraints(
-          maxWidth: 700,
-        ),
+        constraints: const BoxConstraints(maxWidth: 700),
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF0F172A)
-              : Colors.white,
-          borderRadius:
-              BorderRadius.circular(40),
+          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+          borderRadius: BorderRadius.circular(40),
           border: Border.all(
-            color: isDark
-                ? Colors.white10
-                : Colors.grey.shade300,
+            color: isDark ? Colors.white10 : Colors.grey.shade300,
           ),
         ),
         child: Column(
@@ -313,12 +288,9 @@ class _RescheduleModalState extends State<RescheduleModal> {
               child: IconButton(
                 icon: Icon(
                   Icons.close,
-                  color: isDark
-                      ? Colors.white
-                      : Colors.black,
+                  color: isDark ? Colors.white : Colors.black,
                 ),
-                onPressed: () =>
-                    Navigator.pop(context),
+                onPressed: () => Navigator.pop(context),
               ),
             ),
 
@@ -327,17 +299,18 @@ class _RescheduleModalState extends State<RescheduleModal> {
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w900,
-                color: isDark
-                    ? Colors.white
-                    : Colors.black,
+                color: isDark ? Colors.white : Colors.black,
               ),
             ),
 
             const SizedBox(height: 30),
 
-            Row(
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
               children: [
-                Expanded(
+                SizedBox(
+                  width: (MediaQuery.of(context).size.width - 80) / 2,
                   child: _buildPickerField(
                     "التاريخ الجديد",
                     newDate,
@@ -346,9 +319,8 @@ class _RescheduleModalState extends State<RescheduleModal> {
                     isDark,
                   ),
                 ),
-                const SizedBox(width: 12),
-
-                Expanded(
+                SizedBox(
+                  width: (MediaQuery.of(context).size.width - 80) / 2,
                   child: _buildPickerField(
                     "وقت البداية",
                     newSlotStart,
@@ -357,9 +329,8 @@ class _RescheduleModalState extends State<RescheduleModal> {
                     isDark,
                   ),
                 ),
-                const SizedBox(width: 12),
-
-                Expanded(
+                SizedBox(
+                  width: (MediaQuery.of(context).size.width - 80) / 2,
                   child: _buildPickerField(
                     "وقت النهاية",
                     newSlotEnd,
@@ -370,29 +341,17 @@ class _RescheduleModalState extends State<RescheduleModal> {
                 ),
               ],
             ),
-
             const SizedBox(height: 30),
 
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: loading
-                        ? null
-                        : () =>
-                            Navigator.pop(
-                              context,
-                            ),
-                    style:
-                        ElevatedButton.styleFrom(
-                      padding:
-                          const EdgeInsets.symmetric(
-                        vertical: 16,
-                      ),
+                    onPressed: loading ? null : () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text(
-                      "إلغاء",
-                    ),
+                    child: const Text("إلغاء"),
                   ),
                 ),
 
@@ -400,29 +359,16 @@ class _RescheduleModalState extends State<RescheduleModal> {
 
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: loading
-                        ? null
-                        : _handleReschedule,
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(
-                        0xFF137FEC,
-                      ),
-                      padding:
-                          const EdgeInsets.symmetric(
-                        vertical: 16,
-                      ),
+                    onPressed: loading ? null : _handleReschedule,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF137FEC),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Text(
-                      loading
-                          ? "جاري تغيير الموعد..."
-                          : "تغيير الموعد",
-                      style:
-                          const TextStyle(
+                      loading ? "جاري تغيير الموعد..." : "تغيير الموعد",
+                      style: const TextStyle(
                         color: Colors.white,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -443,55 +389,35 @@ class _RescheduleModalState extends State<RescheduleModal> {
     bool isDark,
   ) {
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
           label,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: isDark
-                ? Colors.white
-                : Colors.black87,
+            color: isDark ? Colors.white : Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
         InkWell(
           onTap: onTap,
-          borderRadius:
-              BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF1E293B)
-                  : const Color(0xFFF3F4F6),
-              borderRadius:
-                  BorderRadius.circular(20),
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: isDark
-                      ? Colors.white70
-                      : Colors.black54,
-                ),
+                Icon(icon, color: isDark ? Colors.white70 : Colors.black54),
                 const Spacer(),
                 Text(
-                  value.isEmpty
-                      ? "اختر..."
-                      : value,
+                  value.isEmpty ? "اختر..." : value,
                   style: TextStyle(
                     color: value.isEmpty
                         ? Colors.grey
-                        : (isDark
-                              ? Colors.white
-                              : Colors.black),
+                        : (isDark ? Colors.white : Colors.black),
                   ),
                 ),
               ],
