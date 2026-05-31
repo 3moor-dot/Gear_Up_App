@@ -380,7 +380,10 @@ class _ReviewsPageState extends State<ReviewsPage> {
       child: Column(
         children: [
           Text(
-            loadingRating ? "..." : averageRating.toString(),
+            loadingRating
+                ? "..."
+                : (double.tryParse(averageRating.toString()) ?? 0)
+                      .toStringAsFixed(2),
             style: TextStyle(
               fontSize: 48,
               fontWeight: FontWeight.bold,

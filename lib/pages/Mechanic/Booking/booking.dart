@@ -17,6 +17,26 @@ class BookingPage extends StatefulWidget {
 class _BookingPageState extends State<BookingPage> {
   String activeTab = "all";
   String searchTerm = "";
+  String formatTo12Hour(String time24) {
+    try {
+      final parts = time24.split(":");
+      int hour = int.parse(parts[0]);
+      int minute = int.parse(parts[1]);
+
+      final isPM = hour >= 12;
+
+      hour = hour % 12;
+      if (hour == 0) hour = 12;
+
+      final minuteStr = minute.toString().padLeft(2, '0');
+
+      final period = isPM ? "م" : "ص";
+
+      return "${hour.toString().padLeft(2, '0')}:$minuteStr $period";
+    } catch (e) {
+      return time24;
+    }
+  }
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -42,7 +62,6 @@ class _BookingPageState extends State<BookingPage> {
       });
 
       final prefs = await SharedPreferences.getInstance();
-
       final token = prefs.getString("userToken");
 
       final response = await http.get(
@@ -55,9 +74,16 @@ class _BookingPageState extends State<BookingPage> {
 
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
-
         setState(() {
           allBookings = List<Map<String, dynamic>>.from(data);
+
+          // تأكيد: لو الـ activeTab الحالية مابقتش موجودة في الداتا الجديدة، نرجعها لـ "all"
+          final uniqueStatuses = allBookings
+              .map((b) => b['status'].toString())
+              .toSet();
+          if (activeTab != "all" && !uniqueStatuses.contains(activeTab)) {
+            activeTab = "all";
+          }
         });
       } else {
         setState(() {
@@ -78,7 +104,6 @@ class _BookingPageState extends State<BookingPage> {
   Future<void> acceptBooking(String bookingId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
       final token = prefs.getString("userToken");
 
       final response = await http.post(
@@ -90,7 +115,7 @@ class _BookingPageState extends State<BookingPage> {
       );
 
       if (response.statusCode == 200) {
-        fetchBookings();
+        await fetchBookings();
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -100,7 +125,6 @@ class _BookingPageState extends State<BookingPage> {
   Future<void> rejectBooking(String bookingId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
       final token = prefs.getString("userToken");
 
       final response = await http.post(
@@ -112,7 +136,28 @@ class _BookingPageState extends State<BookingPage> {
       );
 
       if (response.statusCode == 200) {
-        fetchBookings();
+        await fetchBookings();
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> completeBooking(String bookingId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("userToken");
+
+      final response = await http.post(
+        Uri.parse("$baseUrl/$bookingId/complete"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await fetchBookings();
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -138,12 +183,15 @@ class _BookingPageState extends State<BookingPage> {
         },
       );
 
-      Navigator.pop(context);
+      Navigator.pop(context); // إغلاق الـ Loading Indicator
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        setState(() {
+          selectedBooking = data;
+        });
 
-        selectedBooking = data;
+        if (!mounted) return;
 
         showModalBottomSheet(
           context: context,
@@ -152,192 +200,187 @@ class _BookingPageState extends State<BookingPage> {
           builder: (context) {
             final isDark = Theme.of(context).brightness == Brightness.dark;
 
-            return DraggableScrollableSheet(
-              initialChildSize: 0.85,
-              minChildSize: 0.5,
-              maxChildSize: 0.95,
-              expand: false,
-              builder: (_, controller) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0D1629) : Colors.white,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(25),
-                    ),
-                  ),
-                  child: SingleChildScrollView(
-                    controller: controller,
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 50,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: Colors.grey,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
+            // استخدام StatefulBuilder يضمن إن الـ UI جوه الـ Bottom Sheet يتحدث لو حصل أكشن
+            return StatefulBuilder(
+              builder: (BuildContext context, StateSetter setModalState) {
+                return DraggableScrollableSheet(
+                  initialChildSize: 0.85,
+                  minChildSize: 0.5,
+                  maxChildSize: 0.95,
+                  expand: false,
+                  builder: (_, controller) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0D1629) : Colors.white,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(25),
                         ),
-
-                        const SizedBox(height: 20),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      ),
+                      child: SingleChildScrollView(
+                        controller: controller,
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              "تفاصيل الحجز",
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
+                            Center(
+                              child: Container(
+                                width: 50,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
-
-                            IconButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              icon: const Icon(Icons.close),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "تفاصيل الحجز",
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  icon: const Icon(Icons.close),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Center(
-                          child: _getStatusBadge(selectedBooking!['status']),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        _detailCard(
-                          title: "بيانات العميل",
-                          isDark: isDark,
-                          children: [
-                            _detailRow(
-                              "العميل",
-                              selectedBooking!['customerName'],
-                              Icons.person,
-                              isDark,
+                            const SizedBox(height: 20),
+                            Center(
+                              child: _getStatusBadge(
+                                selectedBooking!['status'],
+                              ),
                             ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        _detailCard(
-                          title: "تفاصيل الحجز",
-                          isDark: isDark,
-                          children: [
-                            _detailRow(
-                              "السيارة",
-                              selectedBooking!['carInfo'],
-                              Icons.directions_car,
-                              isDark,
+                            const SizedBox(height: 20),
+                            _detailCard(
+                              title: "بيانات العميل",
+                              isDark: isDark,
+                              children: [
+                                _detailRow(
+                                  "العميل",
+                                  selectedBooking!['customerName'],
+                                  Icons.person,
+                                  isDark,
+                                ),
+                              ],
                             ),
-
-                            _detailRow(
-                              "الخدمة",
-                              selectedBooking!['subSpecializationName'] ?? "",
-                              Icons.build,
-                              isDark,
+                            const SizedBox(height: 16),
+                            _detailCard(
+                              title: "تفاصيل الحجز",
+                              isDark: isDark,
+                              children: [
+                                _detailRow(
+                                  "السيارة",
+                                  selectedBooking!['carInfo'],
+                                  Icons.directions_car,
+                                  isDark,
+                                ),
+                                _detailRow(
+                                  "الخدمة",
+                                  selectedBooking!['subSpecializationName'] ??
+                                      "",
+                                  Icons.build,
+                                  isDark,
+                                ),
+                                _detailRow(
+                                  "التاريخ",
+                                  selectedBooking!['date'],
+                                  Icons.calendar_today,
+                                  isDark,
+                                ),
+                                _detailRow(
+                                  "الوقت",
+                                  "${formatTo12Hour(selectedBooking!['slotStart'])} - ${formatTo12Hour(selectedBooking!['slotEnd'])}",
+                                  Icons.access_time,
+                                  isDark,
+                                ),
+                                _detailRow(
+                                  "الميكانيكي",
+                                  selectedBooking!['mechanicName'] ?? "",
+                                  Icons.engineering,
+                                  isDark,
+                                ),
+                              ],
                             ),
-
-                            _detailRow(
-                              "التاريخ",
-                              selectedBooking!['date'],
-                              Icons.calendar_today,
-                              isDark,
+                            const SizedBox(height: 16),
+                            _detailCard(
+                              title: "سجل الوقت",
+                              isDark: isDark,
+                              children: [
+                                _detailRow(
+                                  "تاريخ الإنشاء",
+                                  selectedBooking!['createdAt'] ?? "",
+                                  Icons.history,
+                                  isDark,
+                                ),
+                                _detailRow(
+                                  "آخر تحديث",
+                                  selectedBooking!['updatedAt'] ?? "—",
+                                  Icons.update,
+                                  isDark,
+                                ),
+                              ],
                             ),
+                            const SizedBox(height: 24),
 
-                            _detailRow(
-                              "الوقت",
-                              "${selectedBooking!['slotStart'].toString().substring(0, 5)} - ${selectedBooking!['slotEnd'].toString().substring(0, 5)}",
-                              Icons.access_time,
-                              isDark,
-                            ),
-
-                            _detailRow(
-                              "الميكانيكي",
-                              selectedBooking!['mechanicName'] ?? "",
-                              Icons.engineering,
-                              isDark,
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        _detailCard(
-                          title: "سجل الوقت",
-                          isDark: isDark,
-                          children: [
-                            _detailRow(
-                              "تاريخ الإنشاء",
-                              selectedBooking!['createdAt'] ?? "",
-                              Icons.history,
-                              isDark,
-                            ),
-
-                            _detailRow(
-                              "آخر تحديث",
-                              selectedBooking!['updatedAt'] ?? "—",
-                              Icons.update,
-                              isDark,
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        if (selectedBooking!['status'] == "Pending")
-                          Row(
-                            children: [
-                              Expanded(
+                            // أزرار التحكم من داخل الـ Bottom Sheet
+                            if (selectedBooking!['status'] == "Pending")
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _actionBtn(
+                                      "موافقة",
+                                      Colors.white,
+                                      () async {
+                                        Navigator.pop(
+                                          context,
+                                        ); // نقفله فوراً لتجنب التعليق
+                                        await acceptBooking(
+                                          selectedBooking!['id'],
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _actionBtn(
+                                      "رفض",
+                                      Colors.white,
+                                      () async {
+                                        Navigator.pop(context);
+                                        await rejectBooking(
+                                          selectedBooking!['id'],
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            if (selectedBooking!['status'] == "Confirmed" ||
+                                selectedBooking!['status'] == "Accepted")
+                              SizedBox(
+                                width: double.infinity,
                                 child: _actionBtn(
-                                  "موافقة",
-                                  Colors.green,
+                                  "إكمال الحجز",
+                                  Colors.white,
                                   () async {
                                     Navigator.pop(context);
-
-                                    await acceptBooking(selectedBooking!['id']);
+                                    await completeBooking(
+                                      selectedBooking!['id'],
+                                    );
                                   },
                                 ),
                               ),
-
-                              const SizedBox(width: 10),
-
-                              Expanded(
-                                child: _actionBtn("رفض", Colors.red, () async {
-                                  Navigator.pop(context);
-
-                                  await rejectBooking(selectedBooking!['id']);
-                                }),
-                              ),
-                            ],
-                          ),
-
-                        if (selectedBooking!['status'] == "Confirmed" ||
-                            selectedBooking!['status'] == "Accepted")
-                          SizedBox(
-                            width: double.infinity,
-                            child: _actionBtn(
-                              "إكمال الحجز",
-                              Colors.blue,
-                              () async {
-                                Navigator.pop(context);
-
-                                await completeBooking(selectedBooking!['id']);
-                              },
-                            ),
-                          ),
-
-                        const SizedBox(height: 30),
-                      ],
-                    ),
-                  ),
+                            const SizedBox(height: 30),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             );
@@ -346,32 +389,9 @@ class _BookingPageState extends State<BookingPage> {
       }
     } catch (e) {
       Navigator.pop(context);
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
-  }
-
-  Future<void> completeBooking(String bookingId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      final token = prefs.getString("userToken");
-
-      final response = await http.post(
-        Uri.parse("$baseUrl/$bookingId/complete"),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Content-Type": "application/json",
-        },
-      );
-
-      if (response.statusCode == 200) {
-        fetchBookings();
-      }
-    } catch (e) {
-      debugPrint(e.toString());
     }
   }
 
@@ -386,9 +406,10 @@ class _BookingPageState extends State<BookingPage> {
           booking['carInfo'].toString().toLowerCase().contains(
             searchTerm.toLowerCase(),
           ) ||
-          booking['subSpecializationName'].toString().toLowerCase().contains(
-            searchTerm.toLowerCase(),
-          );
+          (booking['subSpecializationName'] ?? '')
+              .toString()
+              .toLowerCase()
+              .contains(searchTerm.toLowerCase());
 
       return matchesTab && matchesSearch;
     }).toList();
@@ -396,7 +417,6 @@ class _BookingPageState extends State<BookingPage> {
 
   int getCount(String status) {
     if (status == "all") return allBookings.length;
-
     return allBookings.where((b) => b['status'] == status).length;
   }
 
@@ -404,20 +424,15 @@ class _BookingPageState extends State<BookingPage> {
     switch (status) {
       case "Pending":
         return "انتظار";
-
       case "Confirmed":
       case "Accepted":
         return "موافقة";
-
       case "Cancelled":
         return "ملغي";
-
       case "Rejected":
         return "مرفوض";
-
       case "Completed":
         return "مكتمل";
-
       default:
         return status;
     }
@@ -426,9 +441,7 @@ class _BookingPageState extends State<BookingPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final primaryColor = const Color(0xFF137FEC);
-
     final bool isLargeScreen = MediaQuery.of(context).size.width > 1024;
 
     if (isLoading) {
@@ -460,11 +473,8 @@ class _BookingPageState extends State<BookingPage> {
                 child: Column(
                   children: [
                     const MachineHeader(),
-
                     _buildTopSection(isDark),
-
                     _buildTabsBar(isDark, primaryColor),
-
                     Expanded(child: _buildBookingsList(isDark, primaryColor)),
                   ],
                 ),
@@ -486,9 +496,7 @@ class _BookingPageState extends State<BookingPage> {
             "الحجوزات",
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-
           const SizedBox(height: 16),
-
           TextField(
             controller: _searchController,
             onChanged: (val) {
@@ -528,7 +536,6 @@ class _BookingPageState extends State<BookingPage> {
 
     final tabs = [
       {"id": "all", "label": "الجميع"},
-
       ...uniqueStatuses.map(
         (status) => {"id": status, "label": _getArabicStatus(status)},
       ),
@@ -543,7 +550,6 @@ class _BookingPageState extends State<BookingPage> {
         itemCount: tabs.length,
         itemBuilder: (context, index) {
           final tab = tabs[index];
-
           final bool isActive = activeTab == tab['id'];
 
           return Padding(
@@ -590,7 +596,6 @@ class _BookingPageState extends State<BookingPage> {
       itemCount: filteredBookings.length,
       itemBuilder: (context, index) {
         final booking = filteredBookings[index];
-
         return _buildBookingCard(booking, isDark, primaryColor);
       },
     );
@@ -627,7 +632,6 @@ class _BookingPageState extends State<BookingPage> {
                       fontSize: 16,
                     ),
                   ),
-
                   Text(
                     booking['carInfo'],
                     style: TextStyle(
@@ -637,31 +641,24 @@ class _BookingPageState extends State<BookingPage> {
                   ),
                 ],
               ),
-
               _getStatusBadge(booking['status']),
             ],
           ),
-
           const Divider(height: 24),
-
           _buildInfoRow(
             Icons.settings,
             "الخدمة:",
-            booking['subSpecializationName'],
+            booking['subSpecializationName'] ?? '',
             isDark,
           ),
-
           const SizedBox(height: 8),
-
           _buildInfoRow(
             Icons.calendar_today,
             "الموعد:",
-            "${booking['date']} | ${booking['slotStart']} - ${booking['slotEnd']}",
+            "${booking['date']} | ${formatTo12Hour(booking['slotStart'])} - ${formatTo12Hour(booking['slotEnd'])}",
             isDark,
           ),
-
           const SizedBox(height: 16),
-
           _buildActionButtons(booking, primaryColor),
         ],
       ),
@@ -672,9 +669,7 @@ class _BookingPageState extends State<BookingPage> {
     return Row(
       children: [
         Icon(icon, size: 16, color: Colors.grey),
-
         const SizedBox(width: 8),
-
         Text(
           label,
           style: TextStyle(
@@ -682,9 +677,7 @@ class _BookingPageState extends State<BookingPage> {
             fontSize: 12,
           ),
         ),
-
         const Spacer(),
-
         Text(
           value,
           style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
@@ -719,9 +712,7 @@ class _BookingPageState extends State<BookingPage> {
               color: isDark ? Colors.grey[400] : Colors.grey[700],
             ),
           ),
-
           const SizedBox(height: 12),
-
           ...children,
         ],
       ),
@@ -734,9 +725,7 @@ class _BookingPageState extends State<BookingPage> {
       child: Row(
         children: [
           Icon(icon, size: 18, color: Colors.blue),
-
           const SizedBox(width: 10),
-
           Text(
             label,
             style: TextStyle(
@@ -744,9 +733,7 @@ class _BookingPageState extends State<BookingPage> {
               fontSize: 13,
             ),
           ),
-
           const Spacer(),
-
           Flexible(
             child: Text(
               value,
@@ -764,21 +751,17 @@ class _BookingPageState extends State<BookingPage> {
       return Row(
         children: [
           Expanded(
-            child: _actionBtn("موافقة", Colors.green, () {
+            child: _actionBtn("موافقة", Colors.white, () {
               acceptBooking(booking['id']);
             }),
           ),
-
           const SizedBox(width: 8),
-
           Expanded(
-            child: _actionBtn("رفض", Colors.red, () {
+            child: _actionBtn("رفض", Colors.white, () {
               rejectBooking(booking['id']);
             }),
           ),
-
           const SizedBox(width: 8),
-
           _iconBtn(Icons.visibility, primaryColor, () {
             showBookingDetails(booking['id']);
           }),
@@ -795,9 +778,7 @@ class _BookingPageState extends State<BookingPage> {
               completeBooking(booking['id']);
             }),
           ),
-
           const SizedBox(height: 8),
-
           SizedBox(
             width: double.infinity,
             child: _actionBtn("عرض التفاصيل", primaryColor, () {
@@ -855,28 +836,23 @@ class _BookingPageState extends State<BookingPage> {
         color = Colors.orange;
         label = "انتظار";
         break;
-
       case "Confirmed":
       case "Accepted":
         color = Colors.green;
         label = "موافقة";
         break;
-
       case "Cancelled":
         color = Colors.red;
         label = "ملغي";
         break;
-
       case "Rejected":
         color = Colors.red;
         label = "مرفوض";
         break;
-
       case "Completed":
         color = Colors.blue;
         label = "مكتمل";
         break;
-
       default:
         color = Colors.grey;
         label = status;

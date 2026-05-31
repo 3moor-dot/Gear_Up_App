@@ -55,7 +55,7 @@ class _MachineDrawerState extends State<MachineDrawer> {
     await prefs.clear(); // مسح التوكن وكل البيانات المخزنة
     
     if (context.mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     }
   }
 

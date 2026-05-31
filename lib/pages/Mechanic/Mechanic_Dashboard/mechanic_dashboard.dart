@@ -74,8 +74,7 @@ class _MachineDashboardState extends State<MachineDashboard> {
       final data = jsonDecode(res.body);
 
       setState(() {
-        pendingBookings =
-            data.where((b) => b["status"] == "Pending").toList();
+        pendingBookings = data.where((b) => b["status"] == "Pending").toList();
       });
     } catch (e) {
       print(e);
@@ -133,10 +132,7 @@ class _MachineDashboardState extends State<MachineDashboard> {
         ratingValue = data.toString();
       } else if (data is Map) {
         ratingValue =
-            data["avgRating"] ??
-            data["averageRating"] ??
-            data["rating"] ??
-            "0";
+            data["avgRating"] ?? data["averageRating"] ?? data["rating"] ?? "0";
       }
 
       setState(() {
@@ -169,16 +165,15 @@ class _MachineDashboardState extends State<MachineDashboard> {
 
       final data = jsonDecode(res.body);
 
-      final mapped =
-          (data["reviews"] as List).map((r) {
-            return {
-              "id": r["id"],
-              "clientName": r["userName"],
-              "rating": r["rating"],
-              "comment": r["comment"],
-              "date": r["createdAt"],
-            };
-          }).toList();
+      final mapped = (data["reviews"] as List).map((r) {
+        return {
+          "id": r["id"],
+          "clientName": r["userName"],
+          "rating": r["rating"],
+          "comment": r["comment"],
+          "date": r["createdAt"],
+        };
+      }).toList();
 
       setState(() {
         reviews = mapped;
@@ -210,10 +205,7 @@ class _MachineDashboardState extends State<MachineDashboard> {
         },
       );
 
-      await Future.wait([
-        fetchPending(),
-        fetchToday(),
-      ]);
+      await Future.wait([fetchPending(), fetchToday()]);
     } catch (e) {
       print(e);
     } finally {
@@ -263,13 +255,12 @@ class _MachineDashboardState extends State<MachineDashboard> {
     final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0B1220) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? const Color(0xFF0B1220)
+          : const Color(0xFFF8FAFC),
       endDrawer: const SizedBox(
         width: 260,
-        child: MachineDrawer(
-          currentRoute: "/mechanic/dashboard",
-        ),
+        child: MachineDrawer(currentRoute: "/mechanic/dashboard"),
       ),
       body: SafeArea(
         child: Row(
@@ -277,9 +268,7 @@ class _MachineDashboardState extends State<MachineDashboard> {
             if (width > 1024)
               const SizedBox(
                 width: 260,
-                child: MachineDrawer(
-                  currentRoute: "/mechanic/dashboard",
-                ),
+                child: MachineDrawer(currentRoute: "/mechanic/dashboard"),
               ),
 
             Expanded(
@@ -292,23 +281,18 @@ class _MachineDashboardState extends State<MachineDashboard> {
                       padding: const EdgeInsets.all(16),
                       children: [
                         // ================= HEADER =================
-
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   "لوحة التحكم",
                                   style: TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark
-                                        ? Colors.white
-                                        : Colors.black,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
 
@@ -329,44 +313,36 @@ class _MachineDashboardState extends State<MachineDashboard> {
                         const SizedBox(height: 22),
 
                         // ================= STATS =================
-
                         _buildStats(isDark),
 
                         const SizedBox(height: 24),
 
                         // ================= BOOKINGS =================
-
                         _buildBookings(isDark, width),
 
                         const SizedBox(height: 24),
 
                         // ================= APPOINTMENTS + REVIEWS =================
-
                         width > 900
                             ? Row(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: _buildAppointments(isDark),
-                                ),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: _buildAppointments(isDark)),
 
-                                const SizedBox(width: 16),
+                                  const SizedBox(width: 16),
 
-                                Expanded(
-                                  child: _buildReviews(isDark),
-                                ),
-                              ],
-                            )
+                                  Expanded(child: _buildReviews(isDark)),
+                                ],
+                              )
                             : Column(
-                              children: [
-                                _buildAppointments(isDark),
+                                children: [
+                                  _buildAppointments(isDark),
 
-                                const SizedBox(height: 20),
+                                  const SizedBox(height: 20),
 
-                                _buildReviews(isDark),
-                              ],
-                            ),
+                                  _buildReviews(isDark),
+                                ],
+                              ),
                       ],
                     ),
                   ),
@@ -385,24 +361,20 @@ class _MachineDashboardState extends State<MachineDashboard> {
     final stats = [
       {
         "title": "طلبات الحجز الجديدة",
-        "value":
-            loadingRequests
-                ? "..."
-                : pendingBookings.length.toString(),
+        "value": loadingRequests ? "..." : pendingBookings.length.toString(),
         "change": "طلبات قيد الانتظار",
       },
       {
         "title": "مواعيد اليوم",
-        "value":
-            loadingToday
-                ? "..."
-                : todayAppointments.length.toString(),
+        "value": loadingToday ? "..." : todayAppointments.length.toString(),
         "change": "موعد مجدول",
       },
       {
         "title": "متوسط التقييم",
-        "value":
-            loadingRating ? "..." : averageRating.toString(),
+        "value": loadingRating
+            ? "..."
+            : double.tryParse(averageRating.toString())?.toStringAsFixed(2) ??
+                  "0.00",
         "change": "هذا الشهر",
       },
     ];
@@ -415,13 +387,12 @@ class _MachineDashboardState extends State<MachineDashboard> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: stats.length,
-          gridDelegate:
-              SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 2,
-              ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 14,
+            childAspectRatio: 2,
+          ),
           itemBuilder: (_, i) {
             final stat = stats[i];
 
@@ -429,42 +400,32 @@ class _MachineDashboardState extends State<MachineDashboard> {
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient:
-                    isDark
-                        ? const LinearGradient(
-                          colors: [
-                            Color(0xFF1A2332),
-                            Color(0xFF0D1629),
-                          ],
-                        )
-                        : null,
+                gradient: isDark
+                    ? const LinearGradient(
+                        colors: [Color(0xFF1A2332), Color(0xFF0D1629)],
+                      )
+                    : null,
                 color: !isDark ? Colors.white : null,
                 borderRadius: BorderRadius.circular(22),
-                boxShadow:
-                    !isDark
-                        ? [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(.05),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ]
-                        : [],
+                boxShadow: !isDark
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ]
+                    : [],
               ),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     stat["title"]!.toString(),
                     style: TextStyle(
                       fontSize: 13,
-                      color:
-                          isDark
-                              ? Colors.grey[400]
-                              : Colors.grey[700],
+                      color: isDark ? Colors.grey[400] : Colors.grey[700],
                     ),
                   ),
 
@@ -482,10 +443,7 @@ class _MachineDashboardState extends State<MachineDashboard> {
 
                   Text(
                     stat["change"]!.toString(),
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: Colors.green, fontSize: 12),
                   ),
                 ],
               ),
@@ -501,21 +459,17 @@ class _MachineDashboardState extends State<MachineDashboard> {
   Widget _buildBookings(bool isDark, double width) {
     return Container(
       decoration: BoxDecoration(
-        color:
-            isDark
-                ? const Color(0xFF0D1629)
-                : Colors.white,
+        color: isDark ? const Color(0xFF0D1629) : Colors.white,
         borderRadius: BorderRadius.circular(22),
-        boxShadow:
-            !isDark
-                ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(.05),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-                : [],
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(.05),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : [],
       ),
       child: Column(
         children: [
@@ -525,19 +479,13 @@ class _MachineDashboardState extends State<MachineDashboard> {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color:
-                      isDark
-                          ? Colors.white10
-                          : Colors.grey.shade200,
+                  color: isDark ? Colors.white10 : Colors.grey.shade200,
                 ),
               ),
             ),
             child: const Text(
               "طلبات الحجز الجديدة",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
 
@@ -551,9 +499,7 @@ class _MachineDashboardState extends State<MachineDashboard> {
               padding: const EdgeInsets.all(30),
               child: Text(
                 "لا توجد طلبات جديدة",
-                style: TextStyle(
-                  color: Colors.grey[500],
-                ),
+                style: TextStyle(color: Colors.grey[500]),
               ),
             )
           else if (width > 700)
@@ -568,252 +514,153 @@ class _MachineDashboardState extends State<MachineDashboard> {
                   DataColumn(label: Text("الوقت")),
                   DataColumn(label: Text("الإجراءات")),
                 ],
-                rows:
-                    pendingBookings.map((b) {
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Text(
-                              b["customerName"],
-                            ),
-                          ),
+                rows: pendingBookings.map((b) {
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(b["customerName"])),
 
-                          DataCell(
-                            Text(
-                              b["carInfo"],
-                            ),
-                          ),
+                      DataCell(Text(b["carInfo"])),
 
-                          DataCell(
-                            Text(
-                              b["subSpecializationName"],
-                            ),
-                          ),
+                      DataCell(Text(b["subSpecializationName"])),
 
-                          DataCell(
-                            Text(
-                              "${b["slotStart"].substring(0, 5)}",
-                            ),
-                          ),
+                      DataCell(Text("${b["slotStart"].substring(0, 5)}")),
 
-                          DataCell(
-                            Row(
-                              children: [
-                                ElevatedButton(
-                                  onPressed:
-                                      actionLoading ==
-                                              b["id"]
-                                          ? null
-                                          : () => acceptBooking(
-                                            b["id"],
-                                          ),
-                                  style:
-                                      ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            Colors.green,
-                                        shape:
-                                            RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    30,
-                                                  ),
-                                            ),
-                                      ),
-                                  child: Text(
-                                    actionLoading ==
-                                            b["id"]
-                                        ? "..."
-                                        : "موافقة",
-                                  ),
+                      DataCell(
+                        Row(
+                          children: [
+                            ElevatedButton(
+                              onPressed: actionLoading == b["id"]
+                                  ? null
+                                  : () => acceptBooking(b["id"]),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
                                 ),
-
-                                const SizedBox(width: 8),
-
-                                ElevatedButton(
-                                  onPressed:
-                                      actionLoading ==
-                                              b["id"]
-                                          ? null
-                                          : () => rejectBooking(
-                                            b["id"],
-                                          ),
-                                  style:
-                                      ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            Colors.red,
-                                        shape:
-                                            RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    30,
-                                                  ),
-                                            ),
-                                      ),
-                                  child: const Text("رفض"),
-                                ),
-                              ],
+                              ),
+                              child: Text(
+                                actionLoading == b["id"] ? "..." : "موافقة",
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
+
+                            const SizedBox(width: 8),
+
+                            ElevatedButton(
+                              onPressed: actionLoading == b["id"]
+                                  ? null
+                                  : () => rejectBooking(b["id"]),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: const Text("رفض"),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
               ),
             )
           else
             Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
-                children:
-                    pendingBookings.map((b) {
-                      return Container(
-                        margin:
-                            const EdgeInsets.only(
-                              bottom: 12,
-                            ),
-                        padding:
-                            const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color:
-                              isDark
-                                  ? const Color(
-                                    0xFF131C2F,
-                                  )
-                                  : const Color(
-                                    0xFFF8FAFC,
-                                  ),
-                          borderRadius:
-                              BorderRadius.circular(
-                                18,
-                              ),
-                          border: Border.all(
-                            color:
-                                isDark
-                                    ? Colors.white10
-                                    : Colors.grey.shade200,
-                          ),
-                        ),
-                        child: Column(
+                children: pendingBookings.map((b) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF131C2F)
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isDark ? Colors.white10 : Colors.grey.shade200,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment
-                                            .start,
-                                    children: [
-                                      Text(
-                                        b["customerName"],
-                                        style:
-                                            const TextStyle(
-                                              fontWeight:
-                                                  FontWeight
-                                                      .bold,
-                                            ),
-                                      ),
-
-                                      const SizedBox(
-                                        height: 4,
-                                      ),
-
-                                      Text(
-                                        "${b["carInfo"]} • ${b["subSpecializationName"]}",
-                                        style: TextStyle(
-                                          color:
-                                              Colors
-                                                  .grey[500],
-                                          fontSize:
-                                              12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                Text(
-                                  b["slotStart"]
-                                      .substring(
-                                        0,
-                                        5,
-                                      ),
-                                  style:
-                                      const TextStyle(
-                                        color:
-                                            Colors
-                                                .blue,
-                                        fontWeight:
-                                            FontWeight
-                                                .bold,
-                                      ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 14),
-
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed:
-                                        actionLoading ==
-                                                b["id"]
-                                            ? null
-                                            : () => acceptBooking(
-                                              b["id"],
-                                            ),
-                                    style:
-                                        ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              Colors
-                                                  .green,
-                                          shape:
-                                              RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      14,
-                                                    ),
-                                              ),
-                                        ),
-                                    child: const Text(
-                                      "موافقة",
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    b["customerName"],
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                ),
 
-                                const SizedBox(width: 10),
+                                  const SizedBox(height: 4),
 
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed:
-                                        actionLoading ==
-                                                b["id"]
-                                            ? null
-                                            : () => rejectBooking(
-                                              b["id"],
-                                            ),
-                                    style:
-                                        ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              Colors.red,
-                                          shape:
-                                              RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      14,
-                                                    ),
-                                              ),
-                                        ),
-                                    child:
-                                        const Text("رفض"),
+                                  Text(
+                                    "${b["carInfo"]} • ${b["subSpecializationName"]}",
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 12,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                            ),
+
+                            Text(
+                              b["slotStart"].substring(0, 5),
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
-                      );
-                    }).toList(),
+
+                        const SizedBox(height: 14),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: actionLoading == b["id"]
+                                    ? null
+                                    : () => acceptBooking(b["id"]),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: const Text("موافقة"),
+                              ),
+                            ),
+
+                            const SizedBox(width: 10),
+
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: actionLoading == b["id"]
+                                    ? null
+                                    : () => rejectBooking(b["id"]),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: const Text("رفض"),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
             ),
         ],
@@ -829,90 +676,73 @@ class _MachineDashboardState extends State<MachineDashboard> {
       "مواعيد اليوم",
       loadingToday
           ? const Center(
-            child: Padding(
-              padding: EdgeInsets.all(30),
-              child: CircularProgressIndicator(),
-            ),
-          )
+              child: Padding(
+                padding: EdgeInsets.all(30),
+                child: CircularProgressIndicator(),
+              ),
+            )
           : todayAppointments.isEmpty
           ? _emptyWidget("لا توجد مواعيد اليوم")
           : Column(
-            children:
-                todayAppointments.map((a) {
-                  return _smallCard(
-                    isDark,
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                a["customerName"],
-                                style:
-                                    const TextStyle(
-                                      fontWeight:
-                                          FontWeight.bold,
-                                    ),
+              children: todayAppointments.map((a) {
+                return _smallCard(
+                  isDark,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              a["customerName"],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
+                          ),
 
-                            Text(
-                              "${a["slotStart"].substring(0, 5)} - ${a["slotEnd"].substring(0, 5)}",
-                              style:
-                                  const TextStyle(
-                                    color:
-                                        Colors.blue,
-                                    fontWeight:
-                                        FontWeight.bold,
-                                  ),
+                          Text(
+                            "${a["slotStart"].substring(0, 5)} - ${a["slotEnd"].substring(0, 5)}",
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      Text(
+                        a["subSpecializationName"],
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
                         ),
-
-                        const SizedBox(height: 6),
-
-                        Text(
-                          a["subSpecializationName"],
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(.15),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: const Text(
+                          "مؤكد",
                           style: TextStyle(
-                            color:
-                                Colors.grey[500],
-                            fontSize: 12,
+                            color: Colors.green,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-
-                        const SizedBox(height: 10),
-
-                        Container(
-                          padding:
-                              const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 5,
-                              ),
-                          decoration: BoxDecoration(
-                            color: Colors.green
-                                .withOpacity(.15),
-                            borderRadius:
-                                BorderRadius.circular(
-                                  30,
-                                ),
-                          ),
-                          child: const Text(
-                            "مؤكد",
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontSize: 11,
-                              fontWeight:
-                                  FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-          ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
     );
   }
 
@@ -924,110 +754,85 @@ class _MachineDashboardState extends State<MachineDashboard> {
       "المراجعات الأخيرة",
       loadingReviews
           ? const Center(
-            child: Padding(
-              padding: EdgeInsets.all(30),
-              child: CircularProgressIndicator(),
-            ),
-          )
+              child: Padding(
+                padding: EdgeInsets.all(30),
+                child: CircularProgressIndicator(),
+              ),
+            )
           : reviews.isEmpty
-          ? _emptyWidget(
-            "لا توجد مراجعات حتى الآن",
-          )
+          ? _emptyWidget("لا توجد مراجعات حتى الآن")
           : Column(
-            children:
-                reviews.map((r) {
-                  return _smallCard(
-                    isDark,
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                r["clientName"]
-                                    .toString(),
-                                style:
-                                    const TextStyle(
-                                      fontWeight:
-                                          FontWeight.bold,
-                                    ),
+              children: reviews.map((r) {
+                return _smallCard(
+                  isDark,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              r["clientName"].toString(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-
-                            Row(
-                              children: List.generate(
-                                r["rating"],
-                                (i) => const Icon(
-                                  Icons.star,
-                                  color:
-                                      Colors.amber,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Text(
-                          r["comment"]
-                              .toString(),
-                          style: TextStyle(
-                            color:
-                                Colors.grey[500],
-                            fontSize: 12,
                           ),
-                        ),
 
-                        const SizedBox(height: 6),
+                          Row(
+                            children: List.generate(
+                              r["rating"],
+                              (i) => const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
 
-                        Text(
-                          r["date"] != null
-                              ? DateTime.parse(
+                      const SizedBox(height: 8),
+
+                      Text(
+                        r["comment"].toString(),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      Text(
+                        r["date"] != null
+                            ? DateTime.parse(
                                 r["date"],
                               ).toLocal().toString().split(" ")[0]
-                              : "",
-                          style: TextStyle(
-                            color:
-                                Colors.grey[400],
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-          ),
+                            : "",
+                        style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
     );
   }
 
   // ================= HELPERS =================
 
-  Widget _sectionContainer(
-    bool isDark,
-    String title,
-    Widget child,
-  ) {
+  Widget _sectionContainer(bool isDark, String title, Widget child) {
     return Container(
       decoration: BoxDecoration(
-        color:
-            isDark
-                ? const Color(0xFF0D1629)
-                : Colors.white,
+        color: isDark ? const Color(0xFF0D1629) : Colors.white,
         borderRadius: BorderRadius.circular(22),
-        boxShadow:
-            !isDark
-                ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(.05),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-                : [],
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(.05),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : [],
       ),
       child: Column(
         children: [
@@ -1037,50 +842,32 @@ class _MachineDashboardState extends State<MachineDashboard> {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color:
-                      isDark
-                          ? Colors.white10
-                          : Colors.grey.shade200,
+                  color: isDark ? Colors.white10 : Colors.grey.shade200,
                 ),
               ),
             ),
             child: Text(
               title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: child,
-          ),
+          Padding(padding: const EdgeInsets.all(16), child: child),
         ],
       ),
     );
   }
 
-  Widget _smallCard(
-    bool isDark, {
-    required Widget child,
-  }) {
+  Widget _smallCard(bool isDark, {required Widget child}) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:
-            isDark
-                ? const Color(0xFF131C2F)
-                : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF131C2F) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color:
-              isDark
-                  ? Colors.white10
-                  : Colors.grey.shade200,
+          color: isDark ? Colors.white10 : Colors.grey.shade200,
         ),
       ),
       child: child,
@@ -1091,12 +878,7 @@ class _MachineDashboardState extends State<MachineDashboard> {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Colors.grey[500],
-          ),
-        ),
+        child: Text(text, style: TextStyle(color: Colors.grey[500])),
       ),
     );
   }
