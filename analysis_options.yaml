@@ -20,7 +20,6 @@ analyzer:
     strict_top_level_inference: ignore
     unused_element: ignore
     unrelated_type_equality_checks: ignore
-include: package:flutter_lints/flutter.yaml
 
 linter:
   # The lint rules applied to this project can be customized in the
