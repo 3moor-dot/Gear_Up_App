@@ -10,7 +10,7 @@
 		</data>
 		<key>flutter_assets/AssetManifest.bin</key>
 		<data>
-		PI3CDKpAtksB4ZWfqb1q08iYuGY=
+		ZMzVMUq0wb8wPBFEPJERCdD2q9w=
 		</data>
 		<key>flutter_assets/FontManifest.json</key>
 		<data>
@@ -18,7 +18,7 @@
 		</data>
 		<key>flutter_assets/NOTICES.Z</key>
 		<data>
-		y9/QhRT+O/Z8GRcrPRIt4X6nIsY=
+		XQ3vF2aoUv01YwaMZvteBHyBk04=
 		</data>
 		<key>flutter_assets/NativeAssetsManifest.json</key>
 		<data>
@@ -48,9 +48,17 @@
 		<data>
 		0PcllRtyxb47tT2BFoqqhxXZH4o=
 		</data>
+		<key>flutter_assets/assets/hero.png</key>
+		<data>
+		2nmYXWwuUvTdbJWpJBYgM+EjjEQ=
+		</data>
 		<key>flutter_assets/assets/img2.png</key>
 		<data>
 		bAlVRNcEDBU+Rla6wLTCXvEW4bw=
+		</data>
+		<key>flutter_assets/assets/logo.png</key>
+		<data>
+		jIy9sWtbLQX+m8SxSElPBLjGuwQ=
 		</data>
 		<key>flutter_assets/assets/mechanic1.png</key>
 		<data>
@@ -66,7 +74,7 @@
 		</data>
 		<key>flutter_assets/kernel_blob.bin</key>
 		<data>
-		v/jeuF9qLnQ1ru2h+KP6CAKwpRM=
+		BK/Sr87rQKB7WeIKa3k5xDZAClA=
 		</data>
 		<key>flutter_assets/packages/awesome_dialog/assets/flare/error.flr</key>
 		<data>
@@ -171,7 +179,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			V6i6c9ZG2S/NAIjiam8dT+PdMx4GSnSK1Ut6s16fNOo=
+			VlnjaZs0qMLihorqwRkohd/GeVNByHEsXZcV6vSkqLI=
 			</data>
 		</dict>
 		<key>flutter_assets/FontManifest.json</key>
@@ -185,7 +193,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			MkGKpJC1R7d0FynJ3IWGf4E9cnmIuEwvI5L89v1d47w=
+			E6jqFvI8znGO6pIdUB+iToluP15r2E5ot6xwXGkCuf0=
 			</data>
 		</dict>
 		<key>flutter_assets/NativeAssetsManifest.json</key>
@@ -237,11 +245,25 @@
 			TVah7dQnBV4IGkGbFBXDSwCPeNPdMvNsUeOEMjtzTZc=
 			</data>
 		</dict>
+		<key>flutter_assets/assets/hero.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Yj1C1T79oon6Xz7lwMpa9GDmmF2aKCHxILm0HKtwYIw=
+			</data>
+		</dict>
 		<key>flutter_assets/assets/img2.png</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			7MYG3+sobaWQp31Qy2otfzS8WjNF8Z9nHtGVHBb3OmI=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/logo.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			6Fv1SCigfvUmPHUQzKc0WwYxyv8EdU4TW05IwdA2qoI=
 			</data>
 		</dict>
 		<key>flutter_assets/assets/mechanic1.png</key>
@@ -269,7 +291,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Pl5DQoXQcDatGQjQy+yCDRImJNxQiDTDZZtZtuVSEug=
+			uZjatv9pZOdf9bYi7UHW06rxyQLSNDoTpvnNF8yPmvg=
 			</data>
 		</dict>
 		<key>flutter_assets/packages/awesome_dialog/assets/flare/error.flr</key>
