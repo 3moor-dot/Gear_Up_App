@@ -77,7 +77,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         // التحويل لصفحة تسجيل الدخول بعد ثانيتين (نفس React)
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
           }
         });
       } else {

@@ -15,7 +15,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
   bool loading = false;
   bool showPassword = false;
 
@@ -216,7 +216,9 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     if (!mounted) return;
 
-    Color backgroundColor = const Color(0xFF131A2E); // Dark Mode Default
+    Color backgroundColor = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFF131A2E); // Dark Mode Default
     if (isSuccess) backgroundColor = Colors.green.shade600;
     if (isWarning) backgroundColor = const Color(0xFFFFB020);
 
@@ -228,6 +230,7 @@ class _LoginPageState extends State<LoginPage> {
         margin: const EdgeInsets.all(15),
         content: Directionality(
           textDirection: TextDirection.rtl,
+
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,6 +268,7 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  
                   const Text(
                     "تسجيل الدخول",
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
@@ -280,8 +284,8 @@ class _LoginPageState extends State<LoginPage> {
                   _input(
                     controller: emailController,
                     hint: "البريد الإلكتروني أو رقم الهاتف",
-                    icon: Icons
-                        .phone_android_outlined, // تغيير الأيقونة لتطابق الـ FaPhone في الـ React
+                    icon: Icons.phone_android_outlined,
+                    keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 15),
                   _input(
@@ -302,10 +306,11 @@ class _LoginPageState extends State<LoginPage> {
                   ElevatedButton(
                     onPressed: loading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(
-                        0xFF2563EB,
-                      ), // تحديث اللون ليتطابق مع الـ React (#2563EB)
-                      foregroundColor: Colors.white,
+                      backgroundColor: isDark
+                          ? const Color(0xFF137FEC)
+                          : const Color(0xFF2563EB),
+                      foregroundColor: Colors
+                          .white, // تحديث اللون ليتطابق مع الـ React (#2563EB)
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -333,7 +338,12 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("ليس لديك حساب؟"),
+                      Text(
+                        "ليس لديك حساب؟",
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                      ),
                       TextButton(
                         onPressed: () {
                           Navigator.pushNamed(context, "/register");
@@ -361,6 +371,7 @@ class _LoginPageState extends State<LoginPage> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
     bool obscure = false,
     Widget? suffix,
   }) {
@@ -370,10 +381,13 @@ class _LoginPageState extends State<LoginPage> {
       textAlign: TextAlign.right,
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon, color: Colors.grey.shade500),
+        prefixIcon: Icon(
+          icon,
+          color: isDark ? Colors.white60 : Colors.grey.shade500,
+        ),
         suffixIcon: suffix,
         filled: true,
-        fillColor: const Color(0xFFF1F5FD),
+        fillColor: isDark ? const Color(0xFF131A2E) : const Color(0xFFF1F5FD),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,

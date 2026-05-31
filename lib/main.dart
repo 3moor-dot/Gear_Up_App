@@ -9,6 +9,7 @@ import 'package:gear_up_app/pages/Verfiy_Account/verfiy_account.dart';
 import 'package:gear_up_app/pages/Notification/notifications_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:gear_up_app/pages/Landing/landing.dart';
 
 import 'package:gear_up_app/pages/Customer/Control panel/control_panel.dart';
 import 'package:gear_up_app/pages/Customer/Reminder/maintenance_reminders.dart';
@@ -86,13 +87,14 @@ class MyApp extends StatelessWidget {
       title: 'GearUp',
       theme: ThemeData(
         brightness: Brightness.light,
-        primaryColor: const Color(0xFF137FEC),
-        scaffoldBackgroundColor: Colors.white,
+        colorScheme: const ColorScheme.light(primary: Color(0xFF137FEC)),
+        scaffoldBackgroundColor: const Color(0xffF7F9FD),
       ),
+
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        primaryColor: const Color(0xFF137FEC),
-        scaffoldBackgroundColor: const Color(0xFF0B1220),
+        colorScheme: const ColorScheme.dark(primary: Color(0xFF137FEC)),
+        scaffoldBackgroundColor: const Color(0xFF0F1323),
       ),
       themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
 
@@ -105,8 +107,9 @@ class MyApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('ar', 'EG')],
 
-      initialRoute: '/',
+      initialRoute: '/home',
       routes: {
+        '/home': (context) => const LandingPage(),
         '/': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/forgot-password': (context) => const ForgotPasswordPage(),

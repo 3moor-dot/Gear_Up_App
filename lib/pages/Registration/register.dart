@@ -61,7 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("تم إنشاء الحساب بنجاح!")),
         );
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/');
       } else {
         // معالجة الخطأ القادم من السيرفر
         String msg = "فشل التسجيل";
@@ -369,7 +369,7 @@ class _RegisterPageState extends State<RegisterPage> {
 }
   Widget _buildLoginLink(bool isDark) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, '/login'),
+      onTap: () => Navigator.pushNamed(context, '/'),
       child: Text.rich(
         TextSpan(
           text: "لديك حساب؟ ",
